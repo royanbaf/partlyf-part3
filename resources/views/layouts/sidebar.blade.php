@@ -1,6 +1,3 @@
-<!-- ========================================== -->
-<!-- GLOBAL TOAST NOTIFICATION (TENGAH ATAS) -->
-<!-- ========================================== -->
 @if(session('success') || session('error'))
     @php
         $isError = session('error');
@@ -33,52 +30,52 @@
         }, 3000);
     </script>
 @endif
-<!-- ========================================== -->
-
-<!-- ZONA FLEXING: CSS GLOBAL UNTUK SEMUA HALAMAN -->
 <style>
     body { background-color: #020617; color: white; overflow-x: hidden; }
     
+    /* 1. GLASS PANEL (Header & Sidebar) - Tetap pakai blur tapi diturunkan radiusnya */
     .glass-panel { 
         background: rgba(15, 23, 42, 0.85); 
-        backdrop-filter: blur(12px); 
-        -webkit-backdrop-filter: blur(12px); 
+        backdrop-filter: blur(8px); 
+        -webkit-backdrop-filter: blur(8px); 
         border-right: 1px solid rgba(255, 255, 255, 0.05); 
         border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
         transform: translateZ(0); 
-        will-change: transform, backdrop-filter;
+        will-change: transform; /* Jangan masukkan backdrop-filter ke will-change */
     }
     
+    /* 2. GLASS CARD (Produk, Notif, dll) - THE GAME CHANGER (Tanpa Blur Berat) */
     .glass-card { 
-        background: rgba(30, 41, 59, 0.8); 
+        background: rgba(30, 41, 59, 0.9); /* Solid tapi sedikit tembus pandang */
         border: 1px solid rgba(255, 255, 255, 0.08); 
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
     }
     
+    /* 3. ANIMASI BLOB BACKGROUND - Diringankan agar GPU bernapas */
     @keyframes blob {
         0% { transform: translate3d(0px, 0px, 0px) scale(1); }
-        33% { transform: translate3d(30px, -50px, 0px) scale(1.1); }
-        66% { transform: translate3d(-20px, 20px, 0px) scale(0.9); }
+        33% { transform: translate3d(20px, -30px, 0px) scale(1.05); }
+        66% { transform: translate3d(-15px, 15px, 0px) scale(0.95); }
         100% { transform: translate3d(0px, 0px, 0px) scale(1); }
     }
     .animate-blob { 
-        animation: blob 15s infinite ease-in-out; 
+        animation: blob 25s infinite linear; 
         will-change: transform; 
         backface-visibility: hidden;
+        filter: blur(60px) !important; /* Paksa batas blur global */
+        opacity: 0.25 !important;
     }
-    .animation-delay-2000 { animation-delay: 2s; }
-    .animation-delay-4000 { animation-delay: 4s; }
+    .animation-delay-2000 { animation-delay: 5s; }
+    .animation-delay-4000 { animation-delay: 10s; }
 </style>
 
-<!-- SIDEBAR NAVIGASI UTAMA (GLASS EFFECT) -->
 <aside class="w-72 glass-panel text-slate-300 flex flex-col h-full z-20 flex-shrink-0 relative">
-    <!-- Logo -->
     <div class="h-20 flex items-center px-8 border-b border-white/5">
         <a href="{{ route('customer.dashboard') }}" class="text-3xl font-black text-white tracking-tighter">
             PARTLYFE<span class="text-amber-500">.</span>
         </a>
     </div>
 
-    <!-- Menu List -->
     <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1 scrollbar-hide relative z-10">
         <p class="px-4 text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2 mt-4">Menu Utama</p>
         
@@ -114,7 +111,6 @@
         </a>
     </div>
 
-    <!-- BAGIAN BAWAH DINAMIS -->
     @auth
         <div class="p-4 border-t border-white/5 bg-slate-900/30">
             <div class="flex items-center gap-3 mb-4 px-2">
