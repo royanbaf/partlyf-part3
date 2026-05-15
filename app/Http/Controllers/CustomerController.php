@@ -12,6 +12,7 @@ use App\Models\Transaction;
 use App\Models\Broadcast; // Jangan lupa panggil model Broadcast
 use Illuminate\Support\Facades\Auth;
 
+
 class CustomerController extends Controller
 {
     // ==========================================================
@@ -187,11 +188,6 @@ class CustomerController extends Controller
         return view('customer.transactions', compact('transactions'));
     }
 
-    public function aiChat()
-    {
-        return view('customer.ai-chat');
-    }
-
     // ==========================================================
     // 5. AREA KABAR ADMIN (BROADCAST)
     // ==========================================================
@@ -241,5 +237,67 @@ class CustomerController extends Controller
         $user->save();
 
         return back()->with('success', 'Profil dan alamat berhasil diperbarui!');
+    }
+
+    public function aiChat()
+    {
+        return view('customer.ai-chat');
+    }
+
+   public function sendAiMessage(Request $request)
+    {
+        $userMessage = $request->input('message');
+        $apiKey = env('GEMINI_API_KEY');
+
+        // 1. Cek apakah API Key terbaca
+        if (!$apiKey) {
+            return response()->json([
+                'status' => 'error',
+                'reply' => 'Sistem AI Offline: API Key belum terbaca di file .env!'
+            ]);
+        }
+
+        try {
+           $systemPrompt = "Kamu adalah seorang asisten mekanik virtual yang pintar, ramah, dan gaul dari PartLyfe. Jawablah pertanyaan pelanggan dengan singkat, padat, dan berikan solusi seputar otomotif roda dua atau sparepart. Gunakan bahasa Indonesia yang santai tapi profesional, oh iya ini juga untuk pengujian jadi sapa dulu dosen saya bernama pak satria dan pak yustus ,serta asdos saya ruby dan amanda. dan kamu hanya boleh menjawab seputar otomotive sepeda motor saja selain itu bilang maaf saya tidak bisa menjaangkau pertanyaan di luar topik saya  Pertanyaan pelanggan: ";
+            
+            $fullPrompt = $systemPrompt . $userMessage;
+
+            // PERUBAHAN DI SINI: Kita panggil nama model terbaru gemini-2.5-flash
+            $response = \Illuminate\Support\Facades\Http::withoutVerifying()->withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $apiKey, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $fullPrompt]
+                        ]
+                    ]
+                ]
+            ]);
+            $data = $response->json();
+            
+            // 3. Tangkap pesan error ASLI dari Google (Misal: API Key tidak valid)
+            if (isset($data['error'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'reply' => 'ERROR DARI GOOGLE: ' . $data['error']['message']
+                ]);
+            }
+
+            $aiReply = $data['candidates'][0]['content']['parts'][0]['text'] ?? "Waduh, mekanik AI lagi bengong nih.";
+            $aiReplyHtml = preg_replace('/\*\*(.*?)\*\*/', '<strong>$1</strong>', $aiReply);
+
+            return response()->json([
+                'status' => 'success',
+                'reply' => nl2br($aiReplyHtml)
+            ]);
+
+        } catch (\Exception $e) {
+            // 4. Tangkap error sistem Laravel
+            return response()->json([
+                'status' => 'error',
+                'reply' => 'ERROR SISTEM: ' . $e->getMessage()
+            ]);
+        }
     }
 }

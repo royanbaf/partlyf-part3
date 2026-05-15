@@ -76,6 +76,10 @@ Route::middleware(['auth', 'role:b2c'])->group(function () {
     Route::post('/customer/broadcast/{id}/read', [CustomerController::class, 'markSingleBroadcastRead'])->name('customer.broadcast.read');
     Route::get('/customer/profile', [CustomerController::class, 'profile'])->name('customer.profile');
     Route::put('/customer/profile/update', [CustomerController::class, 'updateProfile'])->name('customer.profile.update');
+
+    Route::get('/customer/ai-chat', [CustomerController::class, 'aiChat'])->name('customer.ai-chat');
+    // TAMBAHKAN INI UNTUK MENANGKAP PESAN DARI JAVASCRIPT:
+    Route::post('/customer/ai-chat/send', [CustomerController::class, 'sendAiMessage'])->name('customer.ai-chat.send');
 });
 
 require __DIR__.'/auth.php';
