@@ -15,15 +15,20 @@ use Midtrans\Config;
 use Midtrans\Snap;
 
 
+
 class CustomerController extends Controller
 {
     // ==========================================================
     // 1. AREA KATALOG & PRODUK UTAMA
     // ==========================================================
 
-    public function dashboard(Request $request)
+   public function dashboard(Request $request)
     {
-        $query = Product::with('prices');
+        // 1. Panggil relasi prices dan images sekaligus agar loading ngebut
+        $query = Product::with(['prices', 'images']);
+
+        // 2. SIHIR PRIORITAS: Lempar produk yang stoknya habis (0) ke urutan paling belakang
+        $query->orderByRaw("CASE WHEN current_stock <= 0 THEN 1 ELSE 0 END ASC");
 
         // Fitur Pencarian (Search)
         if ($request->has('search') && $request->search != '') {
@@ -46,7 +51,7 @@ class CustomerController extends Controller
                 $query->orderBy(
                     ProductPrice::select('price')
                         ->whereColumn('product_prices.product_id', 'products.id')
-                        ->where('price_level', 1)
+                        ->where('price_level', 1) // 1 = Harga Retail B2C
                         ->limit(1),
                     'asc'
                 );
