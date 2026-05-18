@@ -89,6 +89,7 @@ Route::middleware(['auth', 'role:b2c'])->group(function () {
     Route::post('/customer/payment/initiate', [CustomerController::class, 'initiatePayment'])->name('customer.payment.initiate');
     Route::post('/customer/payment/update-status', [CustomerController::class, 'updatePaymentStatus'])->name('customer.payment.update-status');
     Route::get('/customer/invoice/{invoice_number}', [CustomerController::class, 'invoice'])->name('customer.invoice');
+    Route::get('/product/{id}', [CustomerController::class, 'show'])->name('product.detail');
 });
 
 

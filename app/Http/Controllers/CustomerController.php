@@ -13,6 +13,7 @@ use App\Models\Broadcast;
 use Illuminate\Support\Facades\Auth;
 use Midtrans\Config;
 use Midtrans\Snap;
+use Illuminate\Support\Facades\Http;
 
 
 
@@ -546,6 +547,83 @@ class CustomerController extends Controller
             ->firstOrFail();
 
         return view('customer.invoice', compact('transaction'));
+    }
+    // MENAMPILKAN HALAMAN DETAIL PRODUK & REKOMENDASI REAL AI API
+    public function show($id)
+    {
+        // 1. Ambil produk utama yang sedang di-klik oleh pelanggan
+        $product = Product::with(['category', 'prices', 'images'])->findOrFail($id);
+
+        // 2. Ambil katalog produk lain yang stoknya ready sebagai kandidat rekomendasi
+        $allProducts = Product::with(['prices', 'images'])
+            ->where('id', '!=', $product->id)
+            ->where('current_stock', '>', 0)
+            ->get();
+
+        // Sederhanakan data katalog agar tidak terlalu besar/overload saat dikirim ke API AI
+        $catalogData = $allProducts->map(function($p) {
+            return [
+                'id' => $p->id,
+                'name' => $p->name,
+                'brand' => $p->brand,
+                'price' => $p->prices->where('price_level', 1)->first()->price ?? 0,
+                'stock' => $p->current_stock
+            ];
+        })->toArray();
+
+        // 3. PROSES TEMBAK API AI (Menggunakan Gemini API Asli)
+        $aiRecommendedIds = [];
+        $apiKey = env('GEMINI_API_KEY'); // Membaca kunci dari file .env kamu
+
+        if ($apiKey) {
+            try {
+                // Buat Prompt (perintah bahasa manusia) yang cerdas untuk AI menganalisis kecocokan mekanis
+                $prompt = "Kamu adalah sistem AI Rekomendasi Suku Cadang Pintar untuk toko e-commerce Partlyfe.\n" .
+                          "Pelanggan saat ini sedang melihat produk ini: Nama: {$product->name}, Merek: {$product->brand}.\n" .
+                          "Analisis secara mekanis otomotif dan pilihlah maksimal 5 produk yang paling keren, cocok, atau relevan untuk dibeli bersamaan dari katalog toko kami berikut ini:\n" .
+                          json_encode($catalogData) . "\n\n" .
+                          "Berikan respon HANYA dalam bentuk array JSON berisi ID produknya saja tanpa ada kata-kata basa-basi pembuka/penutup, contoh hasil: [3, 7, 12, 15]";
+
+                // Mengirim request HTTP POST langsung ke Google Gemini API
+                $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={$apiKey}", [
+                    'contents' => [
+                        ['parts' => [['text' => $prompt]]]
+                    ]
+                ]);
+
+                if ($response->successful()) {
+                    $aiText = $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                    // Bersihkan teks dari format markdown ```json jika AI bandel memberikannya
+                    $aiText = str_replace(['```json', '```', "\n", " "], '', $aiText);
+                    $aiRecommendedIds = json_decode($aiText, true) ?? [];
+                }
+            } catch (\Exception $e) {
+                // Jika internet mati atau API bermasalah, biarkan array kosong agar masuk ke sistem cadangan lokal
+                $aiRecommendedIds = [];
+            }
+        }
+
+        // 4. ANTISIPASI (BACKUP SYSTEM): Jika API AI gagal merespon, sistem tidak akan crash/mati
+        if (empty($aiRecommendedIds) || !is_array($aiRecommendedIds)) {
+            // Backup otomatis: Ambil produk acak dari kategori yang sama di database lokal
+            $recommendations = Product::with(['prices', 'images'])
+                ->where('category_id', $product->category_id)
+                ->where('id', '!=', $product->id)
+                ->inRandomOrder()
+                ->take(5)
+                ->get();
+        } else {
+            // Jika API AI sukses merespon, ambil data produk dari DB sesuai urutan ID rekomendasi AI tersebut
+            $recommendations = Product::with(['prices', 'images'])
+                ->whereIn('id', $aiRecommendedIds)
+                ->get()
+                ->sortBy(function($model) use ($aiRecommendedIds) {
+                    return array_search($model->id, $aiRecommendedIds);
+                });
+        }
+
+        // 5. Lempar data produk utama dan hasil rekomendasi AI beneran ke file Blade
+        return view('customer.product', compact('product', 'recommendations'));
     }
 
 }

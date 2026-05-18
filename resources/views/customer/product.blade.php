@@ -22,12 +22,6 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
     </style>
 </head>
 
@@ -168,7 +162,11 @@
                                     <div class="flex items-center gap-4 mb-6">
                                         <div class="flex items-center bg-slate-900/50 border border-white/10 rounded-xl p-1">
                                             <button type="button" onclick="decreaseQty()" class="w-10 h-10 rounded-lg hover:bg-white/10 text-slate-300 font-bold">-</button>
-                                            <input type="number" id="qtyInput" name="qty" value="1" min="1" max="{{ $product->current_stock }}" class="w-12 text-center font-bold border-none focus:ring-0 p-0 text-white bg-transparent outline-none">
+                                            
+                                            <span id="qtyDisplay" class="w-12 text-center font-bold text-white flex items-center justify-center select-none cursor-default">1</span>
+                                            
+                                            <input type="hidden" id="qtyInput" name="qty" value="1">
+                                            
                                             <button type="button" onclick="increaseQty({{ $product->current_stock }})" class="w-10 h-10 rounded-lg hover:bg-white/10 text-amber-400 font-bold">+</button>
                                         </div>
                                         <p class="text-xs text-slate-400">Stok: <span class="text-white">{{ $product->current_stock }}</span></p>
@@ -306,6 +304,7 @@
     <script>
         const pricePerItem = {{ $retailPrice->price ?? 0 }};
         const qtyInput = document.getElementById('qtyInput');
+        const qtyDisplay = document.getElementById('qtyDisplay');
         const subtotalText = document.getElementById('subtotalText');
 
         function updateSubtotal() {
@@ -316,14 +315,18 @@
 
         function increaseQty(maxStock) {
             if (parseInt(qtyInput.value) < maxStock) {
-                qtyInput.value = parseInt(qtyInput.value) + 1;
+                let newVal = parseInt(qtyInput.value) + 1;
+                qtyInput.value = newVal;
+                qtyDisplay.innerText = newVal;
                 updateSubtotal();
             }
         }
 
         function decreaseQty() {
             if (parseInt(qtyInput.value) > 1) {
-                qtyInput.value = parseInt(qtyInput.value) - 1;
+                let newVal = parseInt(qtyInput.value) - 1;
+                qtyInput.value = newVal;
+                qtyDisplay.innerText = newVal;
                 updateSubtotal();
             }
         }
