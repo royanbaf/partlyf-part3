@@ -2,14 +2,32 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Wishlist extends Model
+// Menggunakan PHP Attributes untuk mengizinkan kolom diisi massal lewat User::create
+#[Fillable(['name', 'email', 'password', 'role', 'phone', 'address'])]
+#[Hidden(['password', 'remember_token'])]
+class User extends Authenticatable
 {
-    protected $fillable = ['user_id', 'product_id'];
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, Notifiable;
 
-    public function product()
+    /**
+     * Menangani casting otomatis tipe data atribut.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
     {
-        return $this->belongsTo(Product::class);
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed', // Password otomatis diamankan menggunakan bcrypt hashes
+        ];
     }
 }

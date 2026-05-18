@@ -5,6 +5,11 @@ use App\Http\Controllers\CustomerController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\TransactionController;
+use App\Http\Controllers\Admin\BroadcastController;
+
 // =======================================================================
 // ZONA SHOWCASE UI (Landing Page)
 // =======================================================================
@@ -84,6 +89,27 @@ Route::middleware(['auth', 'role:b2c'])->group(function () {
     Route::post('/customer/payment/initiate', [CustomerController::class, 'initiatePayment'])->name('customer.payment.initiate');
     Route::post('/customer/payment/update-status', [CustomerController::class, 'updatePaymentStatus'])->name('customer.payment.update-status');
     Route::get('/customer/invoice/{invoice_number}', [CustomerController::class, 'invoice'])->name('customer.invoice');
+});
+
+
+// KELOMPOK ROUTE KHUSUS ADMIN
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    
+    // Dashboard & Customers
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/customers', [DashboardController::class, 'customers'])->name('admin.customers.index'); // <-- Ditambah .index
+    Route::get('/customers/{id}', [DashboardController::class, 'showCustomer'])->name('admin.customers.show');
+    Route::post('/customers/{id}/upgrade', [DashboardController::class, 'upgradeToB2b'])->name('admin.customers.upgrade');
+
+    // Katalog Produk Admin
+    Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index'); // <-- Ditambah .index
+
+    // Transaksi / Pesanan
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('admin.transactions.index'); // <-- Ditambah .index
+
+    // Broadcast Promosi
+    Route::get('/broadcast', [BroadcastController::class, 'index'])->name('admin.broadcast.index'); 
+    Route::post('/broadcast', [BroadcastController::class, 'store'])->name('admin.broadcast.store');
 });
 
 require __DIR__.'/auth.php';

@@ -10,13 +10,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
     /**
-     * Display the registration view.
+     * Tampilkan halaman formulir registrasi.
      */
     public function create(): View
     {
@@ -24,28 +23,34 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Handle an incoming registration request.
+     * Proses data kiriman dari form registrasi web.
      *
-     * @throws ValidationException
+     * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
+        // 1. Validasi input agar wajib diisi, email harus valid & unik, password harus cocok
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // 2. Eksekusi simpan ke database dengan mengunci role langsung ke 'b2c'
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($request->password), // Enkripsi password demi keamanan b2c
+            'role' => 'b2c', // <-- PENGUNCIAN ROLE OTOMATIS JADI CUSTOMER
         ]);
 
+        // 3. Picu event bawaan Laravel Breeze
         event(new Registered($user));
 
+        // 4. Otomatis buat user langsung dalam kondisi Logged In (Masuk Akun)
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // 5. Alihkan secara instan ke halaman utama katalog milik Customer B2C
+        return redirect(route('customer.dashboard', absolute: false));
     }
 }
