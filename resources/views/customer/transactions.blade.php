@@ -8,220 +8,207 @@
     <title>Riwayat Transaksi | Partlyfe</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {{-- 🚀 WAJIB: Script SDK Midtrans Snap --}}
     <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
     <style>
+        main::-webkit-scrollbar { width: 6px; }
+        main::-webkit-scrollbar-track { background: transparent; }
+        main::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes blobFloat {
+            0%   { transform: translate(0px, 0px) scale(1); }
+            33%  { transform: translate(30px, -50px) scale(1.02); }
+            66%  { transform: translate(-20px, 20px) scale(0.98); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .orb { position: fixed; border-radius: 50%; filter: blur(100px); pointer-events: none; z-index: 0; will-change: transform; }
+        .orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%); top: -100px; left: -100px; animation: blobFloat 15s ease-in-out infinite; }
+        .orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(99,102,241,0.04) 0%, transparent 70%); bottom: -100px; right: -100px; animation: blobFloat 20s ease-in-out infinite reverse; }
 
         .glass-header { 
             background: rgba(255, 255, 255, 0.8); 
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
             border-b: 1px solid rgba(226, 232, 240, 0.8); 
         }
-        .luxury-card-flat {
-            background: #ffffff;
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            box-shadow: 0 4px 20px rgba(148, 163, 184, 0.04);
-            transition: transform 0.2s;
-        }
-        .luxury-card-flat:hover {
-            transform: translateY(-2px);
-        }
 
-        /* TOKOPEDIA FILTER TAB STYLE */
-        .filter-tab {
-            padding: 8px 16px; border-radius: 8px; border: 1px solid #e5e7eb;
-            background: #ffffff; font-size: 12px; font-weight: 600; color: #4b5563;
-            transition: all 0.2s ease; white-space: nowrap;
+        .customer-pagination-container nav > div:first-child { display: none; } 
+        .customer-pagination-container nav > div:last-child { display: flex; justify-content: center; width: 100%; gap: 6px; }
+        .customer-pagination-container .page-link, .customer-pagination-container span[aria-current="page"] > span, .customer-pagination-container nav span.relative {
+            width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 12px !important; font-size: 13px; font-weight: 700; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(148, 163, 184, 0.05);
         }
-        .filter-tab:hover { border-color: #d1d5db; background: #f9fafb; }
-        .filter-tab-active {
-            background: #fffbeb !important; border-color: #f59e0b !important; color: #d97706 !important; font-weight: 700;
-        }
+        .customer-pagination-container a.page-link, .customer-pagination-container span.page-link { background-color: #ffffff !important; color: #64748b !important; border: 1px solid #e2e8f0 !important; }
+        .customer-pagination-container a.page-link:hover { border-color: #f59e0b !important; color: #d97706 !important; background-color: #fffbeb !important; }
+        .customer-pagination-container span[aria-current="page"] > span { background-color: #f59e0b !important; color: #ffffff !important; border: 1px solid #f59e0b !important; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2) !important; }
     </style>
 </head>
 
-<body class="bg-[#f8fafc] font-sans text-slate-700 h-screen overflow-hidden flex">
+<body class="bg-[#f8fafc] font-sans text-slate-700 h-screen overflow-hidden flex selection:bg-amber-100 selection:text-amber-900">
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
 
     @include('layouts.sidebar')
 
-    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative z-10">
 
-        {{-- Header --}}
-        <header class="h-20 glass-header flex items-center justify-between px-8 flex-shrink-0 z-50">
-            <div class="text-sm font-bold text-slate-400">
-                <a href="{{ route('customer.dashboard') }}" class="hover:text-amber-600 transition-colors">Beranda</a>
-                <i class="fa-solid fa-chevron-right text-[8px] mx-1 opacity-40"></i>
-                <span class="text-slate-700">Riwayat Transaksi</span>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <a href="{{ route('customer.profile') }}" class="w-9 h-9 bg-gradient-to-br from-amber-400 to-amber-500 text-slate-900 rounded-full flex items-center justify-center font-black text-sm" style="box-shadow: 0 4px 12px rgba(245,158,11,0.2);">
-                    {{ substr(Auth::user()->name, 0, 1) }}
+        {{-- Header Khusus Halaman Transaksi --}}
+        <header class="h-20 glass-header flex items-center justify-between px-8 flex-shrink-0 z-50 sticky top-0">
+            <h1 class="text-xl font-black text-slate-800 tracking-tight">Riwayat Transaksi Saya</h1>
+            <div class="flex items-center gap-6">
+                <a href="{{ route('customer.dashboard') }}" class="text-sm font-bold text-slate-500 hover:text-amber-600 transition-colors">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Kembali ke Katalog
                 </a>
             </div>
         </header>
 
-        {{-- Main Content Area --}}
-        <main class="flex-1 overflow-y-auto p-8 bg-[#f8fafc]">
+        {{-- Main Content --}}
+        <main class="flex-1 overflow-y-auto p-8 relative">
             <div class="max-w-[1000px] mx-auto">
-                <h1 class="text-2xl font-black text-slate-800 mb-6 flex items-center gap-3">
-                    <i class="fa-solid fa-receipt text-amber-500"></i> Daftar Transaksi Anda
-                </h1>
 
-                {{-- 🚀 BARU: TOKOPEDIA HORIZONTAL FILTER TABS --}}
-                <div class="mb-6 flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                    <a href="{{ route('customer.transactions') }}" class="filter-tab {{ !$statusFilter ? 'filter-tab-active' : '' }}">
+                {{-- Filter Navigasi Status Transaksi --}}
+                <div class="mb-8 flex gap-3 overflow-x-auto pb-2 no-scrollbar border-b border-slate-200">
+                    <a href="{{ route('customer.transactions') }}" class="pb-3 px-2 text-sm font-bold transition-all border-b-2 {{ empty($statusFilter) ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
                         Semua Transaksi
                     </a>
-                    <a href="{{ route('customer.transactions', ['status' => 'menunggu']) }}" class="filter-tab {{ $statusFilter == 'menunggu' ? 'filter-tab-active' : '' }}">
+                    <a href="{{ route('customer.transactions', ['status' => 'menunggu']) }}" class="pb-3 px-2 text-sm font-bold transition-all border-b-2 {{ ($statusFilter ?? '') == 'menunggu' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
                         Menunggu Pembayaran
                     </a>
-                    <a href="{{ route('customer.transactions', ['status' => 'diproses']) }}" class="filter-tab {{ $statusFilter == 'diproses' ? 'filter-tab-active' : '' }}">
+                    <a href="{{ route('customer.transactions', ['status' => 'diproses']) }}" class="pb-3 px-2 text-sm font-bold transition-all border-b-2 {{ ($statusFilter ?? '') == 'diproses' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
                         Sedang Diproses
                     </a>
-                    <a href="{{ route('customer.transactions', ['status' => 'dikirim']) }}" class="filter-tab {{ $statusFilter == 'dikirim' ? 'filter-tab-active' : '' }}">
-                        Sedang Dikirim
+                    <a href="{{ route('customer.transactions', ['status' => 'selesai']) }}" class="pb-3 px-2 text-sm font-bold transition-all border-b-2 {{ ($statusFilter ?? '') == 'selesai' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
+                        Selesai
                     </a>
-                    <a href="{{ route('customer.transactions', ['status' => 'gagal']) }}" class="filter-tab {{ $statusFilter == 'gagal' ? 'filter-tab-active' : '' }}">
-                        Gagal / Batal
+                    <a href="{{ route('customer.transactions', ['status' => 'gagal']) }}" class="pb-3 px-2 text-sm font-bold transition-all border-b-2 {{ ($statusFilter ?? '') == 'gagal' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-800' }}">
+                        Dibatalkan
                     </a>
                 </div>
 
-                @if(isset($transactions) && $transactions->count() > 0)
-                    <div class="space-y-4">
-                        @foreach($transactions as $trx)
-                        <div class="luxury-card-flat rounded-2xl p-6 bg-white">
+                {{-- List Card Transaksi --}}
+                <div class="space-y-6">
+                    @forelse($transactions as $trx)
+                        @php
+                            // Perhitungan total harga dinamis otomatis biar tidak Rp 0
+                            $totalTagihan = 0;
+                            if (!empty($trx->gross_amount) && $trx->gross_amount > 0) {
+                                $totalTagihan = $trx->gross_amount;
+                            } elseif (!empty($trx->total_price) && $trx->total_price > 0) {
+                                $totalTagihan = $trx->total_price;
+                            } else {
+                                foreach($trx->details ?? [] as $detail) {
+                                    $totalTagihan += ($detail->qty * ($detail->price ?? 0));
+                                }
+                            }
+                        @endphp
+
+                        <div class="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden hover:border-amber-200 transition-colors">
                             
-                            {{-- Header Nota Transaksi --}}
-                            <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100 mb-4 text-xs text-slate-400 font-bold uppercase tracking-wider">
+                            {{-- Header Card Transaksi --}}
+                            <div class="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center flex-wrap gap-4">
                                 <div class="flex items-center gap-4">
-                                    <span class="text-slate-700 font-mono">INV-{{ $trx->invoice_number ?? $trx->id }}</span>
-                                    <span>•</span>
-                                    <span>{{ $trx->created_at->format('d M Y - H:i') }}</span>
-                                </div>
-                                
-                                {{-- Rendering Status Badge Terkalibrasi --}}
-                                @php 
-                                    $status = strtolower($trx->status ?? $trx->payment_status ?? ''); 
-                                @endphp
-
-                                @if($status === 'processing')
-                                    <span class="px-2.5 py-1 rounded bg-emerald-50 border border-emerald-200 text-emerald-600">Sedang Diproses</span>
-                                @elseif($status === 'dikirim')
-                                    <span class="px-2.5 py-1 rounded bg-blue-50 border border-blue-200 text-blue-600 animate-pulse">Kurir Sedang Mengirim</span>
-                                @elseif(in_array($status, ['settlement', 'capture', 'success', 'paid', 'lunas', 'berhasil']))
-                                    <span class="px-2.5 py-1 rounded bg-emerald-50 border border-emerald-200 text-emerald-600">Selesai</span>
-                                @elseif(in_array($status, ['pending', 'unpaid', 'menunggu']))
-                                    <span class="px-2.5 py-1 rounded bg-amber-50 border border-amber-200 text-amber-600 animate-pulse">Menunggu Pembayaran</span>
-                                @else
-                                    <span class="px-2.5 py-1 rounded bg-rose-50 border border-rose-200 text-rose-600">Gagal / Dibatalkan</span>
-                                @endif
-                            </div>
-
-                            {{-- Info Barang --}}
-                            <div class="flex items-start justify-between gap-6">
-                                <div class="flex items-start gap-4">
-                                    <div class="w-14 h-14 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center flex-shrink-0 text-slate-300 overflow-hidden p-1">
-                                        @if($trx->details && $trx->details->isNotEmpty() && $trx->details->first()->product && $trx->details->first()->product->images->isNotEmpty())
-                                            <img src="{{ asset('storage/products/' . basename($trx->details->first()->product->images->first()->image_path)) }}" class="w-full h-full object-contain">
-                                        @else
-                                            <i class="fa-solid fa-box text-2xl"></i>
-                                        @endif
+                                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
+                                        <i class="fa-solid fa-receipt"></i>
                                     </div>
                                     <div>
-                                        <h4 class="text-sm font-black text-slate-800 leading-snug mb-1">
-                                            {{ $trx->details->first()->product->name ?? 'Suku Cadang Partlyfe' }}
-                                        </h4>
-                                        <p class="text-xs text-slate-400">
-                                            @if($trx->details && $trx->details->count() > 1)
-                                                + {{ $trx->details->count() - 1 }} produk lainnya
-                                            @else
-                                                Total Pembayaran Terhitung
-                                            @endif
-                                        </p>
+                                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ \Carbon\Carbon::parse($trx->created_at)->translatedFormat('d M Y, H:i') }}</p>
+                                        <p class="text-sm font-bold text-slate-800">{{ $trx->invoice_number ?? 'INV-'.$trx->id }}</p>
                                     </div>
                                 </div>
+                                
+                                {{-- Badge Status --}}
+                                <div>
+                                    @if(in_array(strtolower($trx->status), ['pending', 'unpaid', 'menunggu']))
+                                        <span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-amber-200"><i class="fa-regular fa-clock mr-1"></i> Menunggu Bayar</span>
+                                    @elseif(in_array(strtolower($trx->status), ['processing', 'diproses']))
+                                        <span class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-blue-200"><i class="fa-solid fa-box-open mr-1"></i> Diproses</span>
+                                    @elseif(in_array(strtolower($trx->status), ['success', 'selesai', 'settlement']))
+                                        <span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-emerald-200"><i class="fa-solid fa-check mr-1"></i> Selesai</span>
+                                    @else
+                                        <span class="bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-rose-200"><i class="fa-solid fa-xmark mr-1"></i> Gagal/Batal</span>
+                                    @endif
+                                </div>
+                            </div>
 
-                                {{-- Total Nominal Pembayaran & Action Buttons --}}
-                                <div class="text-right flex-shrink-0">
-                                    <p class="text-xs text-slate-400 font-bold mb-0.5">Total Belanja</p>
-                                    <p class="text-base font-black text-slate-900 mb-3">
-                                        Rp {{ number_format($trx->total_amount ?? $trx->total_price ?? 0, 0, ',', '.') }}
-                                    </p>
-                                    
-                                    <div class="flex flex-col gap-2 items-end">
-                                        <a href="{{ route('customer.invoice', $trx->invoice_number ?? $trx->id) }}" class="px-4 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-bold text-[10px] uppercase tracking-wider hover:bg-slate-50 hover:text-amber-600 transition-all flex items-center gap-1.5 shadow-sm">
-                                            <i class="fa-solid fa-file-invoice"></i> Lihat Nota
-                                        </a>
-
-                                        @if(in_array($status, ['pending', 'unpaid', 'menunggu']) && !empty($trx->snap_token))
-                                            <button onclick="payTransaction('{{ $trx->snap_token }}', '{{ $trx->invoice_number }}')" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 text-slate-900 font-black text-[10px] uppercase tracking-wider hover:brightness-105 transition-all shadow-sm">
-                                                Bayar Sekarang
-                                            </button>
-                                        @endif
+                            {{-- Rincian Suku Cadang yang Dibeli --}}
+                            <div class="p-6">
+                                @foreach($trx->details ?? [] as $detail)
+                                    <div class="flex items-center gap-4 mb-4 pb-4 border-b border-slate-50 last:mb-0 last:pb-0 last:border-0">
+                                        <div class="w-16 h-16 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                            @if($detail->product && $detail->product->images && $detail->product->images->isNotEmpty())
+                                                <img src="{{ asset('storage/products/' . basename($detail->product->images->first()->image_path)) }}" class="max-w-full max-h-full object-contain p-1">
+                                            @else
+                                                <i class="fa-solid fa-box text-slate-300 text-xl"></i>
+                                            @endif
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="text-sm font-bold text-slate-800 line-clamp-1">{{ $detail->product->name ?? 'Produk Suku Cadang' }}</h4>
+                                            <p class="text-xs text-slate-500 font-medium mt-0.5">{{ $detail->qty }} x Rp {{ number_format($detail->price ?? 0, 0, ',', '.') }}</p>
+                                        </div>
+                                        <div class="text-right pl-4">
+                                            <p class="text-sm font-black text-slate-900">Rp {{ number_format(($detail->qty * ($detail->price ?? 0)), 0, ',', '.') }}</p>
+                                        </div>
                                     </div>
+                                @endforeach
+                            </div>
+
+                            {{-- Footer Card Transaksi (Total & Tombol Aksi) --}}
+                            <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
+                                <div>
+                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Tagihan</p>
+                                    <p class="text-lg font-black text-amber-600">Rp {{ number_format($totalTagihan, 0, ',', '.') }}</p>
+                                </div>
+                                <div class="flex gap-3 items-center">
+                                    
+                                    {{-- 🚀 TOMBOL LIHAT NOTA / INVOICE ASLI YANG KETINGGALAN --}}
+                                    <a href="{{ route('customer.invoice', $trx->invoice_number ?? 'INV-'.$trx->id) }}" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm flex items-center gap-2">
+                                        <i class="fa-solid fa-file-invoice text-slate-400"></i> Lihat Nota
+                                    </a>
+
+                                    {{-- Hanya muncul jika status pending --}}
+                                    @if(in_array(strtolower($trx->status), ['pending', 'unpaid', 'menunggu']) && !empty($trx->snap_token))
+                                        <button onclick="payTransaction('{{ $trx->snap_token }}')" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-sm">
+                                            <i class="fa-solid fa-wallet mr-2"></i> Bayar Sekarang
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>
-                        @endforeach
-                    </div>
-                @else
-                    {{-- Tampilan kalau riwayat transaksi kosong karena filter --}}
-                    <div class="py-20 text-center rounded-2xl border border-slate-200 bg-white shadow-sm">
-                        <i class="fa-solid fa-folder-open text-5xl text-slate-200 mb-4"></i>
-                        <p class="text-base text-slate-500 font-bold">Tidak ada transaksi ditemukan</p>
-                        <p class="text-xs text-slate-400 mt-1">Belum ada aktivitas transaksi untuk kategori filter status ini.</p>
-                    </div>
-                @endif
+                    @empty
+                        <div class="py-20 text-center bg-white rounded-3xl border border-slate-200/80 shadow-sm">
+                            <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                <i class="fa-solid fa-receipt text-4xl"></i>
+                            </div>
+                            <h3 class="text-lg font-black text-slate-800 mb-1">Belum Ada Transaksi</h3>
+                            <p class="text-sm font-medium text-slate-500">Ayo mulai belanja suku cadang berkualitas di Partlyfe!</p>
+                            <a href="{{ route('customer.dashboard') }}" class="inline-block mt-6 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-sm">
+                                Mulai Belanja
+                            </a>
+                        </div>
+                    @endforelse
+                </div>
+
+                {{-- Pagination --}}
+                <div class="mt-10 mb-6 flex justify-center customer-pagination-container">
+                    {{ $transactions->appends(['status' => $statusFilter ?? ''])->links() }}
+                </div>
+
             </div>
         </main>
     </div>
 
-    {{-- JAVASCRIPT MIDTRANS INTEGRASI SINKRON --}}
+    {{-- SCRIPT MIDTRANS (MANUAL PAY ONLY) --}}
     <script>
-        function payTransaction(snapToken, invoiceNumber) {
+        function payTransaction(snapToken) {
             window.snap.pay(snapToken, {
-                onSuccess: async function(result) {
-                    await updateStatusToBackend(invoiceNumber, 'settlement');
-                },
-                onPending: async function(result) {
-                    await updateStatusToBackend(invoiceNumber, 'pending');
-                },
-                onError: async function(result) {
-                    await updateStatusToBackend(invoiceNumber, 'cancel');
-                },
-                onClose: function() {
-                    alert('Anda menutup popup sebelum menyelesaikan pembayaran.');
-                }
+                onSuccess: function(result) { window.location.reload(); },
+                onPending: function(result) { window.location.reload(); },
+                onError: function(result) { window.location.reload(); },
+                onClose: function() { console.log('Tunda pembayaran.'); }
             });
-        }
-
-        async function updateStatusToBackend(invoiceNumber, status) {
-            try {
-                const response = await fetch("{{ route('customer.payment.update-status') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({ 
-                        order_id: invoiceNumber, 
-                        transaction_status: status 
-                    })
-                });
-                
-                const data = await response.json();
-                if (data.status === 'success') {
-                    window.location.reload(); 
-                } else {
-                    alert('Peringatan Sistem: ' + data.message);
-                }
-            } catch (e) {
-                alert('Terjadi kesalahan fatal koneksi saat melapor ke server Laravel.');
-                console.error('Gagal update status:', e);
-            }
         }
     </script>
 </body>

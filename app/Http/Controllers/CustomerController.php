@@ -163,9 +163,9 @@ class CustomerController extends Controller
     // 4. AREA TRANSAKSI & PENGATURAN USER
     // ==========================================================
 
-    public function transactions(\Illuminate\Http\Request $request)
+   public function transactions(\Illuminate\Http\Request $request)
 {
-    // 1. Ambil parameter filter status dari URL (contoh: ?status=pending)
+    // 1. Ambil parameter filter status dari URL (contoh: ?status=menunggu)
     $statusFilter = $request->query('status');
 
     // 2. Bangun query dasar transaksi milik user yang login
@@ -189,8 +189,9 @@ class CustomerController extends Controller
         }
     }
 
-    // 4. Eksekusi ambil data terbaru
-    $transactions = $query->latest()->get();
+    // 4. 🔥 EKSEKUSI DENGAN PAGINATION (Ubah get() menjadi paginate())
+    // Angka 10 berarti menampilkan 10 transaksi per halaman, silakan disesuaikan
+    $transactions = $query->latest()->paginate(10);
         
     // 5. Kirim data transaksinya beserta status aktif saat ini ke Blade
     return view('customer.transactions', compact('transactions', 'statusFilter'));
@@ -268,7 +269,7 @@ class CustomerController extends Controller
         }
 
         try {
-           $systemPrompt = "Kamu adalah seorang asisten mekanik virtual yang pintar, ramah, dan gaul dari PartLyfe. Jawablah pertanyaan pelanggan dengan singkat, padat, dan berikan solusi seputar otomotif roda dua atau sparepart. Gunakan bahasa Indonesia yang santai tapi profesional, oh iya ini juga untuk pengujian jadi sapa dulu dosen saya bernama pak satria dan pak yustus ,serta asdos saya ruby dan amanda. dan kamu hanya boleh menjawab seputar otomotive sepeda motor saja selain itu bilang maaf saya tidak bisa menjaangkau pertanyaan di luar topik saya  Pertanyaan pelanggan: ";
+           $systemPrompt = "Kamu adalah seorang asisten mekanik virtual yang pintar, ramah, dan gaul dari PartLyfe. Jawablah pertanyaan pelanggan dengan singkat, padat, dan berikan solusi seputar otomotif roda dua atau sparepart. Gunakan bahasa Indonesia yang santai tapi profesional,dan kamu hanya boleh menjawab seputar otomotive sepeda motor saja selain itu bilang maaf saya tidak bisa menjaangkau pertanyaan di luar topik saya  ,Pertanyaan pelanggan: ";
             
             $fullPrompt = $systemPrompt . $userMessage;
 
@@ -661,78 +662,95 @@ class CustomerController extends Controller
         return view('customer.product', compact('product', 'recommendations'));
     }
     public function aiSearch(\Illuminate\Http\Request $request)
-    {
-        $keluhan = $request->input('q');
-        if (empty($keluhan)) return response()->json([]);
+{
+    $keluhan = $request->input('q');
+    if (empty($keluhan)) {
+        return response()->json(['status' => 'success', 'interpreted_as' => '', 'explanation' => '', 'data' => []]);
+    }
 
-        $apiKey = env('GEMINI_API_KEY'); 
+    $apiKey = env('GEMINI_API_KEY');
 
-        try {
-            // 🧠 PROMPT INTRUKSI UNTUK GEMINI AI
-            $prompt = "Kamu adalah kepala mekanik bengkel motor yang ahli. Pelanggan awam mengeluh: '{$keluhan}'. Analisis masalahnya. Berikan output HANYA dalam format JSON valid tanpa markdown, dengan struktur: { \"keywords\": [\"nama_sparepart1\", \"nama_sparepart2\"], \"explanation\": \"Penjelasan ringkas maksimal 2 kalimat kenapa masalah ini terjadi dan komponen apa yang harus diganti.\" }";
+    try {
+        // 🧠 PROMPT ENGINEERING UTUH DAN BERSIH
+        $prompt = "Anda adalah sistem AI perantara untuk pencarian produk di database e-commerce suku cadang motor Sinar Jaya Motor.\n\n"
+                . "Tugas Anda adalah menerima keluhan kerusakan dari pelanggan awam, lalu menganalisisnya secara mekanis, kemudian menghasilkan kata kunci pencarian (keywords) produk pendukungnya yang spesifik agar bisa dicari di database SQL menggunakan perintah LIKE.\n\n"
+                . "Contoh Input Keluhan: 'oli rusak'\n"
+                . "Contoh Output JSON: {\"keywords\": [\"Oli\", \"Mesin\", \"Gardan\", \"Yamalube\", \"MPX\"], \"explanation\": \"Oli yang rusak atau menghitam harus segera diganti untuk menghindari gesekan kasar pada mesin dan transmisi gardan matic Anda.\"}\n\n"
+                . "Contoh Input Keluhan: 'rem blong'\n"
+                . "Contoh Output JSON: {\"keywords\": [\"Kampas\", \"Rem\", \"Minyak\", \"Master\", \"Cakram\"], \"explanation\": \"Rem blong biasanya disebabkan oleh kampas rem yang telah aus atau adanya gelembung udara di dalam saluran minyak rem.\"}\n\n"
+                . "Sekarang, analisis keluhan berikut ini:\n"
+                . "Keluhan: '{$keluhan}'\n\n"
+                . "WAJIB BALAS HANYA DENGAN FORMAT JSON MURNI TANPA MARKDOWN. DILARANG MENGGUNAKAN BLOCK TEMPLATE CODE CODES JASON MAUPUN BACKTICKS. Struktur wajib: {\"keywords\": [], \"explanation\": \"\"}";
 
-            // 🚀 TEMBAK KE GOOGLE GEMINI API
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
-                'contents' => [
-                    ['parts' => [['text' => $prompt]]]
-                ]
-            ]);
+        // Tembak API Gemini via Guzzle HTTP Laravel
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+            'contents' => [['parts' => [['text' => $prompt]]]]
+        ]);
 
-            $geminiData = $response->json();
-            $textResponse = $geminiData['candidates'][0]['content']['parts'][0]['text'] ?? '';
-            
-            // Bersihkan format jika AI membalas dengan block markdown
-            $textResponse = str_replace(['```json', '```'], '', $textResponse);
-            $parsedAi = json_decode(trim($textResponse), true);
+        $geminiData = $response->json();
+        $textResponse = $geminiData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+        
+        // Bersihkan sisa-sisa markdown membandel jika Gemini melanggar aturan prompt
+        $textResponse = str_replace(['```json', '```'], '', $textResponse);
+        
+        // Gunakan Regex untuk mengambil string JSON di dalam kurung kurawal {...}
+        preg_match('/\{.*\}/s', $textResponse, $matches);
+        $cleanJson = $matches[0] ?? '{}';
+        
+        $parsedAi = json_decode($cleanJson, true);
 
-            $aiKeywords = $parsedAi['keywords'] ?? explode(' ', $keluhan);
-            $explanation = $parsedAi['explanation'] ?? 'Mekanik AI sedang menganalisis masalah pada komponen motor Anda...';
-
-        } catch (\Exception $e) {
-            // Fallback jika API sedang gangguan
+        if (is_array($parsedAi) && isset($parsedAi['keywords'])) {
+            $aiKeywords = $parsedAi['keywords'];
+            $explanation = $parsedAi['explanation'];
+        } else {
             $aiKeywords = explode(' ', $keluhan);
-            $explanation = "Sistem AI sedang offline. Menampilkan pencarian standar untuk kata kunci Anda.";
+            $explanation = "Mekanik AI menyarankan Anda untuk memeriksa komponen yang berkaitan dengan keluhan Anda.";
         }
 
-        // =========================================================
-        // QUERY KE DATABASE BERDASARKAN KEYWORD DARI GEMINI
-        // =========================================================
-        $query = \App\Models\Product::with('prices'); // Ambil semua termasuk yang kosong agar bisa di-wishlist
-        
+    } catch (\Exception $e) {
+        $aiKeywords = explode(' ', $keluhan);
+        $explanation = "Sistem AI sedang offline, menampilkan hasil pencarian kata kunci standar.";
+    }
+
+    // =========================================================
+    // JALUR QUERY DATABASE BERDASARKAN HASIL PEMIKIRAN GEMINI
+    // =========================================================
+    $query = \App\Models\Product::with('prices');
+
+    if (!empty($aiKeywords)) {
         $query->where(function($q) use ($aiKeywords) {
             foreach ($aiKeywords as $keyword) {
                 $q->orWhere('name', 'LIKE', '%' . $keyword . '%')
-                  ->orWhere('brand', 'LIKE', '%' . $keyword . '%')
-                  ->orWhere('category_id', 'LIKE', '%' . $keyword . '%');
+                  ->orWhere('brand', 'LIKE', '%' . $keyword . '%');
             }
         });
-
-        // Ambil 5 produk paling relevan
-        $products = $query->take(5)->get();
-
-        $results = $products->map(function($prod) {
-            $price = $prod->prices->where('price_level', 1)->first();
-            $image = $prod->images->first() ? asset('storage/products/' . basename($prod->images->first()->image_path)) : null;
-            
-            return [
-                'id' => $prod->id,
-                'name' => $prod->name,
-                'brand' => $prod->brand,
-                'price' => number_format($price->price ?? 0, 0, ',', '.'),
-                'image' => $image,
-                'url' => route('product.detail', $prod->id)
-            ];
-        });
-
-        // Kirim hasil keyword, list produk, dan PENJELASAN AI ke Frontend
-        return response()->json([
-            'status' => 'success',
-            'interpreted_as' => implode(', ', array_unique($aiKeywords)), 
-            'explanation' => $explanation,
-            'data' => $results
-        ]);
     }
+
+    $products = $query->take(8)->get();
+
+    // Format ulang data untuk dikirim balik ke JavaScript frontend dashboard
+    $results = $products->map(function($prod) {
+        $price = $prod->prices->where('price_level', 1)->first();
+        $image = $prod->images->first() ? asset('storage/products/' . basename($prod->images->first()->image_path)) : null;
+        
+        return [
+            'id' => $prod->id,
+            'name' => $prod->name,
+            'brand' => $prod->brand,
+            'price' => number_format($price->price ?? 0, 0, ',', '.'),
+            'image' => $image,
+            'url' => route('product.detail', $prod->id)
+        ];
+    });
+
+    return response()->json([
+        'status' => 'success',
+        'interpreted_as' => is_array($aiKeywords) ? implode(', ', array_unique($aiKeywords)) : $keluhan,
+        'explanation' => $explanation,
+        'data' => $results
+    ]);
+}
 
 }

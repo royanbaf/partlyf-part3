@@ -8,6 +8,9 @@
     <title>Katalog Suku Cadang Presisi | Partlyfe</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {{-- 🚀 SDK Midtrans Snap Sandbox --}}
+    <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
     <style>
         main::-webkit-scrollbar { width: 6px; }
@@ -67,9 +70,9 @@
         {{-- Header / Search Bar --}}
         <header class="h-20 glass-header flex items-center justify-between px-8 flex-shrink-0 z-50 sticky top-0">
             
-            {{-- 🚀 SEARCH BAR ADVANCED + AI --}}
+            {{-- SEARCH BAR ADVANCED + AI DIRECT UPDATE --}}
             <div class="relative w-full max-w-3xl flex-grow z-[100]">
-                <form action="{{ route('customer.dashboard') }}" method="GET" class="relative">
+                <form id="ai-search-form" action="{{ route('customer.dashboard') }}" method="GET" class="relative">
                     <input type="text" name="search" id="ai-search-input" value="{{ $search ?? '' }}" 
                         placeholder="Ketik keluhan motor (Misal: 'Tarikan berat' atau 'Rem blong')..." autocomplete="off"
                         class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-12 pr-12 focus:bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition-all text-sm text-slate-800 placeholder-slate-400 outline-none shadow-sm">
@@ -78,20 +81,10 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </button>
 
-                    {{-- Animasi AI Loading --}}
                     <div id="ai-loading" class="absolute right-4 top-3 hidden">
-                        <i class="fa-solid fa-microchip text-amber-500 animate-pulse text-lg"></i>
+                        <i class="fa-solid fa-circle-notch fa-spin text-amber-500 text-lg"></i>
                     </div>
                 </form>
-
-                {{-- Dropdown Hasil AI Live Search --}}
-                <div id="ai-search-results" class="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden hidden flex-col">
-                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-2 border-b border-amber-100 flex items-center gap-2">
-                        <i class="fa-solid fa-sparkles text-amber-500 text-xs"></i>
-                        <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">AI Insight: Menganalisis masalah <span id="ai-insight-text" class="text-amber-900">...</span></p>
-                    </div>
-                    <div id="ai-product-list" class="max-h-[300px] overflow-y-auto p-2"></div>
-                </div>
             </div>
             
             <div class="flex items-center gap-6 ml-8">
@@ -116,8 +109,8 @@
         <main class="flex-1 overflow-y-auto p-8 relative">
             <div class="max-w-[1200px] mx-auto">
 
-                {{-- 🚀 BANNER 1: PROFILE DEFAULT --}}
-                <div id="hero-profile-banner" class="mb-10 p-7 rounded-3xl bg-white border border-slate-200/80 relative overflow-hidden flex flex-wrap gap-6 justify-between items-center shadow-sm transition-all duration-500">
+                {{-- BANNER PROFIL UTAMA --}}
+                <div id="hero-profile-banner" class="mb-10 p-7 rounded-3xl bg-white border border-slate-200/80 relative overflow-hidden flex flex-wrap gap-6 justify-between items-center shadow-sm">
                     <div class="flex items-center gap-5">
                         <div class="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 text-slate-900 text-2xl font-black flex items-center justify-center shadow-sm">
                             {{ substr(Auth::user()->name ?? 'P', 0, 1) }}
@@ -144,48 +137,35 @@
                     </div>
                 </div>
 
-                {{-- 🚀 BANNER 2: AI EXPLANATION --}}
-                <div id="hero-ai-banner" class="mb-10 p-7 rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 relative overflow-hidden flex flex-wrap gap-6 items-center shadow-sm hidden transition-all duration-500">
-                    <div class="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0 border border-amber-300 shadow-inner">
-                         <i class="fa-solid fa-microchip text-3xl text-amber-500 animate-pulse"></i>
-                    </div>
-                    <div class="flex-1">
-                         <p class="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1.5"><i class="fa-solid fa-sparkles"></i> Diagnosis Mekanik AI Partlyfe</p>
-                         <h2 id="ai-explanation-text" class="text-base font-bold text-slate-800 leading-relaxed">
-                            {{-- Teks Penjelasan dari API akan masuk ke sini --}}
-                         </h2>
-                    </div>
-                    <button onclick="resetDashboard()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white border border-amber-100 text-slate-400 hover:text-rose-500 hover:bg-rose-50 flex items-center justify-center transition-all shadow-sm" title="Tutup Diagnosis">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
+                {{-- MAIN SECTION LAYOUT --}}
+                <div id="main-catalog-section">
 
-                {{-- Horizontal Categories Filter --}}
-                <div class="mb-8 p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm">
-                    <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-layer-group text-amber-500"></i> Jelajahi Kategori
-                    </p>
-                    <div class="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
-                        <a href="{{ route('customer.dashboard') }}" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-500 transition-all hover:border-slate-400 hover:text-slate-800 flex-shrink-0 {{ !$search ? 'category-btn-active' : '' }}">
-                            Semua Suku Cadang
-                        </a>
-                        @foreach($categories as $cat)
-                        <a href="{{ route('customer.dashboard', ['search' => $cat->name]) }}" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-500 transition-all hover:border-slate-400 hover:text-slate-800 flex-shrink-0 {{ isset($search) && strtolower($search) === strtolower($cat->name) ? 'category-btn-active' : '' }}">
-                            {{ $cat->name }}
-                        </a>
-                        @endforeach
+                    {{-- Horizontal Categories Filter --}}
+                    <div id="categories-filter-box" class="mb-8 p-6 rounded-3xl bg-white border border-slate-200/80 shadow-sm">
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-amber-500"></i> Jelajahi Kategori
+                        </p>
+                        <div class="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+                            <a href="{{ route('customer.dashboard') }}" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-500 transition-all hover:border-slate-400 hover:text-slate-800 flex-shrink-0 {{ !$search ? 'category-btn-active' : '' }}">
+                                Semua Suku Cadang
+                            </a>
+                            @foreach($categories as $cat)
+                            <a href="{{ route('customer.dashboard', ['search' => $cat->name]) }}" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-500 transition-all hover:border-slate-400 hover:text-slate-800 flex-shrink-0 {{ isset($search) && strtolower($search) === strtolower($cat->name) ? 'category-btn-active' : '' }}">
+                                {{ $cat->name }}
+                            </a>
+                            @endforeach
+                        </div>
                     </div>
-                </div>
 
-                {{-- Products Grid System --}}
-                <div>
+                    {{-- Info Title Section --}}
                     <div class="flex justify-between items-center mb-6">
-                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                        <p id="catalog-title" class="text-xs text-slate-400 font-bold uppercase tracking-wider">
                             Daftar Komponen Presisi <span class="text-slate-600">(Total {{ $products->total() }} SKU)</span>
                         </p>
                     </div>
 
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                    {{-- GRID CARD PRODUK UTAMA --}}
+                    <div id="products-grid-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                         @forelse($products as $prod)
                         @php 
                             $price = $prod->prices->where('price_level', 1)->first(); 
@@ -237,12 +217,10 @@
                                         @endauth
                                     @else
                                         @auth
-                                        <form action="{{ route('cart.add', $prod->id) }}" method="POST">
-                                            @csrf <input type="hidden" name="qty" value="1">
-                                            <button type="submit" title="Tambah ke Keranjang" class="w-8 h-8 rounded-xl bg-amber-500 text-slate-900 flex items-center justify-center hover:bg-amber-600 transition-all shadow-sm">
-                                                <i class="fa-solid fa-cart-plus text-xs"></i>
-                                            </button>
-                                        </form>
+                                        {{-- 🚀 LIVE AJAX TRIGGER UNTUK BELI SEKARANG --}}
+                                        <button type="button" onclick="beliLangsung('{{ $prod->id }}')" title="Beli Sekarang" class="w-8 h-8 rounded-xl bg-amber-500 text-slate-900 flex items-center justify-center hover:bg-amber-600 transition-all shadow-sm font-bold text-xs">
+                                            <i class="fa-solid fa-cart-plus text-xs"></i>
+                                        </button>
                                         @else
                                         <a href="{{ route('login') }}" title="Tambah ke Keranjang" class="w-8 h-8 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm">
                                             <i class="fa-solid fa-cart-plus text-xs"></i>
@@ -260,7 +238,8 @@
                         @endforelse
                     </div>
 
-                    <div class="mt-12 mb-6 flex justify-center customer-pagination-container">
+                    {{-- Pagination Box --}}
+                    <div id="pagination-box" class="mt-12 mb-6 flex justify-center customer-pagination-container">
                         {{ $products->appends(['search' => $search])->links() }}
                     </div>
 
@@ -269,19 +248,18 @@
         </main>
     </div>
 
-    {{-- 🚀 JAVASCRIPT ADVANCED AI SEARCH & DYNAMIC BANNER --}}
+    {{-- 🚀 JAVASCRIPT SYSTEM --}}
     <script>
         const searchInput = document.getElementById('ai-search-input');
-        const searchResults = document.getElementById('ai-search-results');
-        const productList = document.getElementById('ai-product-list');
         const loadingIcon = document.getElementById('ai-loading');
-        const insightText = document.getElementById('ai-insight-text');
         
-        // Elemen Banner
-        const heroProfile = document.getElementById('hero-profile-banner');
-        const heroAi = document.getElementById('hero-ai-banner');
-        const aiExplanationText = document.getElementById('ai-explanation-text');
-        
+        const catalogTitle = document.getElementById('catalog-title');
+        const categoriesFilterBox = document.getElementById('categories-filter-box');
+        const productsGridContainer = document.getElementById('products-grid-container');
+        const paginationBox = document.getElementById('pagination-box');
+
+        const defaultGridHtml = productsGridContainer.innerHTML;
+
         let typingTimer;
         const doneTypingInterval = 800; 
 
@@ -291,70 +269,139 @@
             
             if (query.length > 3) {
                 loadingIcon.classList.remove('hidden');
-                aiExplanationText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-amber-500 mr-2"></i> Sedang meminta diagnosis ke Mekanik AI...`;
-                
-                heroProfile.classList.add('hidden');
-                heroAi.classList.remove('hidden');
-
-                typingTimer = setTimeout(() => fetchAiResults(query), doneTypingInterval);
+                typingTimer = setTimeout(() => fetchAiDirectResults(query), doneTypingInterval);
             } else if (query.length === 0) {
                 resetDashboard();
             }
         });
 
-        // Sembunyikan dropdown jika klik di luar
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.classList.add('hidden');
-            }
-        });
-
         function resetDashboard() {
-            searchResults.classList.add('hidden');
             loadingIcon.classList.add('hidden');
-            heroAi.classList.add('hidden');
-            heroProfile.classList.remove('hidden');
+            categoriesFilterBox.classList.remove('hidden');
+            paginationBox.classList.remove('hidden');
+            catalogTitle.innerHTML = `Daftar Komponen Presisi <span class="text-slate-600">(Total {{ $products->total() }} SKU)</span>`;
+            productsGridContainer.innerHTML = defaultGridHtml;
             searchInput.value = '';
         }
 
-        async function fetchAiResults(query) {
+        async function fetchAiDirectResults(query) {
             try {
                 const response = await fetch(`{{ route('api.search.ai') }}?q=${encodeURIComponent(query)}`);
                 const result = await response.json();
                 
                 loadingIcon.classList.add('hidden');
-                productList.innerHTML = ''; 
+                productsGridContainer.innerHTML = ''; 
 
                 if (result.data && result.data.length > 0) {
-                    insightText.textContent = `"${result.interpreted_as}"`;
-                    aiExplanationText.textContent = result.explanation;
-                    
+                    categoriesFilterBox.classList.add('hidden'); 
+                    paginationBox.classList.add('hidden'); 
+                    catalogTitle.innerHTML = `<i class="fa-solid fa-sparkles text-amber-500 mr-1"></i> Rekomendasi Sinar Jaya Motor untuk Keluhan <span class="text-amber-700 font-bold">"${result.interpreted_as.toUpperCase()}"</span> (${result.data.length} SKU):`;
+
                     result.data.forEach(item => {
-                        const imgHtml = item.image ? `<img src="${item.image}" class="w-10 h-10 object-contain rounded-lg border border-slate-100">` : `<div class="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-300"><i class="fa-solid fa-box"></i></div>`;
-                        const row = `
-                            <a href="${item.url}" class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg transition-colors group">
-                                ${imgHtml}
-                                <div class="flex-1">
-                                    <p class="text-xs text-amber-600 font-black uppercase tracking-wider mb-0.5">${item.brand}</p>
-                                    <p class="text-sm font-bold text-slate-800 group-hover:text-amber-600 transition-colors truncate w-full max-w-[400px]">${item.name}</p>
+                        const imgHtml = item.image 
+                            ? `<img src="${item.image}" class="max-w-full max-h-full object-contain">` 
+                            : `<div class="w-full h-full bg-slate-50 flex items-center justify-center text-slate-300"><i class="fa-solid fa-box-open text-4xl"></i></div>`;
+                        
+                        const productCard = `
+                            <div class="luxury-card rounded-2xl flex flex-col overflow-hidden relative">
+                                <a href="${item.url}" class="h-44 bg-white flex items-center justify-center p-4 border-b border-slate-100 relative overflow-hidden group-hover:scale-105 transition-transform duration-500">
+                                    ${imgHtml}
+                                </a>
+                                <div class="p-4 flex flex-col flex-grow bg-white">
+                                    <p class="text-[9px] text-amber-600 font-black uppercase tracking-widest mb-1">${item.brand}</p>
+                                    <a href="${item.url}" class="text-sm font-bold text-slate-800 line-clamp-2 leading-snug hover:text-amber-600 transition-colors mb-4 h-10">
+                                        ${item.name}
+                                    </a>
+                                    <div class="mt-auto pt-3 border-t border-slate-100 flex justify-between items-center gap-3">
+                                        <p class="font-black text-slate-900 text-base">Rp ${item.price}</p>
+                                        <button type="button" onclick="beliLangsung('${item.id}')" title="Beli Sekarang" class="w-8 h-8 rounded-xl bg-amber-500 text-slate-900 flex items-center justify-center hover:bg-amber-600 transition-all shadow-sm font-bold">
+                                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="text-right pr-2">
-                                    <p class="text-sm font-black text-slate-900">Rp ${item.price}</p>
-                                </div>
-                            </a>`;
-                        productList.insertAdjacentHTML('beforeend', row);
+                            </div>`;
+                        
+                        productsGridContainer.insertAdjacentHTML('beforeend', productCard);
                     });
-                    
-                    searchResults.classList.remove('hidden');
-                    searchResults.classList.add('flex');
                 } else {
-                    aiExplanationText.textContent = "Maaf, AI tidak menemukan solusi suku cadang yang tepat di gudang kami untuk masalah tersebut.";
-                    searchResults.classList.add('hidden');
+                    catalogTitle.innerHTML = `Hasil Tidak Ditemukan`;
+                    productsGridContainer.innerHTML = `
+                        <div class="col-span-full py-16 text-center rounded-3xl border border-slate-200 bg-white">
+                            <i class="fa-solid fa-box-open text-5xl text-slate-300 mb-4"></i>
+                            <p class="text-sm text-slate-500 font-bold">Tidak ada komponen suku cadang yang cocok di sistem gudang.</p>
+                        </div>`;
                 }
             } catch (error) {
-                console.error('Error fetching AI search:', error);
+                console.error('Error fetching data directly to grid layout:', error);
                 loadingIcon.classList.add('hidden');
-                aiExplanationText.textContent = "Gagal terhubung ke server AI.";
+            }
+        }
+
+        // =========================================================================
+        // 🚀 LIVE CHECKOUT INTERCEPTOR (MENGGUNAKAN REGISTERED ROUTE NAME ASLI)
+        // =========================================================================
+        async function beliLangsung(productId) {
+            try {
+                document.body.style.cursor = 'wait';
+
+                const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
+                const csrfToken = csrfTokenElement ? csrfTokenElement.content : '';
+
+                if (!csrfToken) {
+                    alert('Sistem Keamanan: CSRF Token tidak ditemukan di halaman head!');
+                    document.body.style.cursor = 'default';
+                    return;
+                }
+
+                // 🔥 PERBAIKAN UTAMA: Menembak langsung Route Ber-nama bawaan Laravel secara aman
+                const response = await fetch("{{ route('customer.payment.initiate') }}", { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        qty: 1
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Server Laravel Error Response:', errorText);
+                    alert(`Server Menolak (Status HTTP ${response.status}). Pastikan Anda telah login dengan akun b2c.`);
+                    document.body.style.cursor = 'default';
+                    return;
+                }
+
+                const result = await response.json();
+                document.body.style.cursor = 'default';
+
+                if (result.status === 'success' && result.snap_token) {
+                    // Panggil Pop-up SDK Snap Midtrans
+                    window.snap.pay(result.snap_token, {
+                        onSuccess: function(paymentResult) {
+                            window.location.href = "{{ route('customer.transactions') }}";
+                        },
+                        onPending: function(paymentResult) {
+                            window.location.href = "{{ route('customer.transactions') }}";
+                        },
+                        onError: function(paymentResult) {
+                            window.location.href = "{{ route('customer.transactions') }}";
+                        },
+                        onClose: function() {
+                            window.location.href = "{{ route('customer.transactions') }}";
+                        }
+                    });
+                } else {
+                    alert('Respons Gagal: ' + (result.message || 'Token pembayaran tidak valid dari server.'));
+                }
+
+            } catch (e) {
+                document.body.style.cursor = 'default';
+                console.error('Detail Error Fatal JavaScript:', e);
+                alert('Terjadi kesalahan fatal saat menghubungkan transaksi ke server.');
             }
         }
     </script>

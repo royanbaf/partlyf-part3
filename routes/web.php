@@ -14,11 +14,13 @@ use App\Http\Controllers\Admin\BroadcastController;
 // ZONA SHOWCASE UI (Landing Page)
 // =======================================================================
 Route::get('/', function () {
-    return view('shop.index');
-});
+    // Ambil 5 kategori teratas untuk etalase
+    $categories = \App\Models\Category::take(5)->get();
+    
+    // Ambil 8 suku cadang terbaru/terlaris beserta harga dan fotonya
+    $products = \App\Models\Product::with(['prices', 'images'])->latest()->take(8)->get();
 
-Route::get('/pos', function () {
-    return view('admin.pos');
+    return view('shop.index', compact('categories', 'products'));
 });
 
 // =======================================================================
@@ -124,6 +126,13 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     // Broadcast Promosi
     Route::get('/broadcast', [BroadcastController::class, 'index'])->name('admin.broadcast.index'); 
     Route::post('/broadcast', [BroadcastController::class, 'store'])->name('admin.broadcast.store');
+    Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Rute dashboard admin bawaan kamu...
+    Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+
+    // 🚀 ROUTE BINDING CRUD PRODUK ADMIN BARU
+    Route::resource('products', App\Http\Controllers\Admin\ProductController::class);
+});
 });
 
 // Rute untuk Live Search berbasis AI
