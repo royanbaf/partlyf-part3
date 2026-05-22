@@ -420,52 +420,15 @@
 
         const btnBeliLangsung = document.getElementById('btn-beli-langsung');
         if (btnBeliLangsung) {
-            btnBeliLangsung.addEventListener('click', async function() {
+            btnBeliLangsung.addEventListener('click', function() {
                 const productId   = this.getAttribute('data-product-id');
                 const qty         = document.getElementById('qtyInput').value;
-                const originalHTML = this.innerHTML;
-
-                this.innerHTML  = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+                
+                this.innerHTML  = '<i class="fa-solid fa-spinner fa-spin"></i> Memuat Ringkasan...';
                 this.disabled   = true;
 
-                try {
-                    const res = await fetch("{{ route('customer.payment.initiate') }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify({ product_id: productId, qty: qty })
-                    });
-                    const data = await res.json();
-
-                    if (data.status === 'success') {
-                        window.snap.pay(data.snap_token, {
-                            onSuccess: async (result) => {
-                                await fetch("{{ route('customer.payment.update-status') }}", {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                    },
-                                    body: JSON.stringify({ order_id: result.order_id, transaction_status: result.transaction_status })
-                                });
-                                window.location.href = "/customer/transactions";
-                            },
-                            onPending: () => alert("Silakan selesaikan pembayaran!"),
-                            onError:   () => alert("Pembayaran Gagal!"),
-                            onClose:   () => alert('Anda menutup popup sebelum menyelesaikan pembayaran.')
-                        });
-                    } else {
-                        alert(data.message || 'Gagal memproses token.');
-                    }
-                } catch (e) {
-                    console.error(e);
-                    alert("Koneksi ke server bermasalah.");
-                } finally {
-                    this.innerHTML = originalHTML;
-                    this.disabled  = false;
-                }
+                // Lempar ke halaman Ringkasan Belanja dengan membawa ID & Qty
+                window.location.href = `/customer/checkout?product_id=${productId}&qty=${qty}`;
             });
         }
     </script>

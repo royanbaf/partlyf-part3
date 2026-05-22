@@ -23,6 +23,10 @@ Route::get('/', function () {
     return view('shop.index', compact('categories', 'products'));
 });
 
+Route::get('/pos', function () {
+    return view('admin.pos');
+});
+
 // =======================================================================
 // ZONA KATALOG PUBLIK (BISA DILIHAT TANPA LOGIN)
 // =======================================================================
@@ -59,7 +63,7 @@ Route::middleware('auth')->group(function () {
 // ZONA ADMIN / KASIR PARTLYFE
 // =======================================================================
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard', function () {
+    Route::get('/admin/dashboard-pos', function () {
         return '<h1>Selamat Datang di Dashboard Admin & POS Partlyfe!</h1>';
     });
 });
@@ -91,12 +95,13 @@ Route::middleware(['auth', 'role:b2c'])->group(function () {
     Route::get('/customer/ai-chat', [CustomerController::class, 'aiChat'])->name('customer.ai-chat');
     Route::post('/customer/ai-chat/send', [CustomerController::class, 'sendAiMessage'])->name('customer.ai-chat.send');
     
-    // Rute Pembayaran Midtrans
+    // 🚀 Rute Pembayaran Midtrans & Ringkasan Belanja (Checkout)
+    Route::get('/customer/checkout', [CustomerController::class, 'checkout'])->name('customer.checkout');
     Route::post('/customer/payment/initiate', [CustomerController::class, 'initiatePayment'])->name('customer.payment.initiate');
     Route::post('/customer/payment/update-status', [CustomerController::class, 'updatePaymentStatus'])->name('customer.payment.update-status');
     Route::get('/customer/invoice/{invoice_number}', [CustomerController::class, 'invoice'])->name('customer.invoice');
 
-    // 🚀 RUTE PROFIL BARU (TERINTEGRASI PENUH DENGAN DATABASE)
+    // RUTE PROFIL BARU (TERINTEGRASI PENUH DENGAN DATABASE)
     Route::get('/customer/profile', [ProfileController::class, 'index'])->name('customer.profile');
     Route::put('/customer/profile/bio', [ProfileController::class, 'updateBio'])->name('profile.update.bio');
     Route::put('/customer/profile/address', [ProfileController::class, 'updateAddress'])->name('profile.update.address');
@@ -117,22 +122,16 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/customers/{id}', [DashboardController::class, 'showCustomer'])->name('admin.customers.show');
     Route::post('/customers/{id}/upgrade', [DashboardController::class, 'upgradeToB2b'])->name('admin.customers.upgrade');
 
-    // Katalog Produk Admin
-    Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
-
     // Transaksi / Pesanan
     Route::get('/transactions', [TransactionController::class, 'index'])->name('admin.transactions.index');
 
     // Broadcast Promosi
     Route::get('/broadcast', [BroadcastController::class, 'index'])->name('admin.broadcast.index'); 
     Route::post('/broadcast', [BroadcastController::class, 'store'])->name('admin.broadcast.store');
-    Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Rute dashboard admin bawaan kamu...
-    Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
 
     // 🚀 ROUTE BINDING CRUD PRODUK ADMIN BARU
-    Route::resource('products', App\Http\Controllers\Admin\ProductController::class);
-});
+    // Diberi penamaan otomatis agar menghasilkan rute 'admin.products.index' dengan benar
+    Route::resource('products', App\Http\Controllers\Admin\ProductController::class)->names('admin.products');
 });
 
 // Rute untuk Live Search berbasis AI

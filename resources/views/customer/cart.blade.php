@@ -161,54 +161,18 @@
             }
         }
 
-        // ==========================================
-        // LOGIKA INTEGRASI CHECKOUT CART MIDTRANS
+       // ==========================================
+        // MENGARAHKAN KE HALAMAN RINGKASAN CHECKOUT
         // ==========================================
         const btnCheckoutCart = document.getElementById('btn-checkout-cart');
         if (btnCheckoutCart) {
-            btnCheckoutCart.addEventListener('click', async function() {
+            btnCheckoutCart.addEventListener('click', function() {
                 const originalHTML = this.innerHTML;
-                this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungkan Midtrans...';
+                this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memuat Ringkasan...';
                 this.disabled = true;
-
-                try {
-                    // Panggil route initiate payment grosir/banyak barang milikmu
-                    const res = await fetch("{{ route('customer.payment.initiate') }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify({ is_cart: true })
-                    });
-                    const data = await res.json();
-
-                    if (data.status === 'success') {
-                        window.snap.pay(data.snap_token, {
-                            onSuccess: async (result) => {
-                                await fetch("{{ route('customer.payment.update-status') }}", {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                    },
-                                    body: JSON.stringify({ order_id: result.order_id, transaction_status: result.transaction_status })
-                                });
-                                window.location.href = "/customer/transactions";
-                            },
-                            onPending: () => alert("Selesaikan pembayaran tagihan Anda!"),
-                            onError:   () => alert("Transaksi Gagal Di-proses!")
-                        });
-                    } else {
-                        alert(data.message || 'Gagal memuat Snap Token.');
-                    }
-                } catch (e) {
-                    console.error(e);
-                    alert("Koneksi server terputus.");
-                } finally {
-                    this.innerHTML = originalHTML;
-                    this.disabled = false;
-                }
+                
+                // Lempar ke halaman Ringkasan Belanja
+                window.location.href = "{{ route('customer.checkout') }}";
             });
         }
     </script>

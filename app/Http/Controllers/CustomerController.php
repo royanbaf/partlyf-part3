@@ -312,44 +312,62 @@ class CustomerController extends Controller
         }
     }
 
-    public function checkout()
+    
+    public function checkout(\Illuminate\Http\Request $request)
     {
-        // 1. Setup Konfigurasi Midtrans
-        Config::$serverKey = config('midtrans.server_key');
-        Config::$isProduction = config('midtrans.is_production');
-        Config::$isSanitized = config('midtrans.is_sanitized');
-        Config::$is3ds = config('midtrans.is_3ds');
+        $productId = $request->query('product_id');
+        $qty = $request->query('qty', 1);
 
-        // 2. Simulasi Data Pesanan (Nanti bisa disesuaikan dengan data Keranjang/Cart asli di DB kamu)
-        $orderId = 'TRX-' . time(); // Contoh: TRX-1715856742
-        $grossAmount = 150000;      // Contoh Total Belanja Rp 150.000
+        $checkoutItems = [];
+        $subtotal = 0;
 
-        // 3. Buat Payload untuk dikirim ke Midtrans
-        $params = [
-            'transaction_details' => [
-                'order_id' => $orderId,
-                'gross_amount' => $grossAmount,
-            ],
-            'customer_details' => [
-                'first_name' => \Illuminate\Support\Facades\Auth::user()->name,
-                'email' => \Illuminate\Support\Facades\Auth::user()->email,
-                'phone' => \Illuminate\Support\Facades\Auth::user()->phone ?? '08111222333',
-            ],
-        ];
-
-        // 4. Dapatkan Snap Token
-        try {
-            $snapToken = Snap::getSnapToken($params);
+        if ($productId) {
+            // JALUR 1: Beli Langsung dari halaman Produk
+            $product = \App\Models\Product::with(['prices', 'images'])->findOrFail($productId);
+            $price = $product->prices->where('price_level', 1)->first()->price ?? 0;
             
-            // Tampilkan halaman checkout beserta tokennya
-            return view('customer.checkout', [
-                'snapToken' => $snapToken,
-                'orderId' => $orderId,
-                'grossAmount' => $grossAmount
-            ]);
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal memproses pembayaran: ' . $e->getMessage());
+            $checkoutItems[] = (object)[
+                'id' => $product->id,
+                'name' => $product->name,
+                'brand' => $product->brand,
+                'image' => $product->images->first() ? asset('storage/products/' . basename($product->images->first()->image_path)) : null,
+                'qty' => $qty,
+                'price' => $price,
+                'subtotal' => $price * $qty
+            ];
+            $subtotal += $price * $qty;
+        } else {
+            // JALUR 2: Checkout dari Keranjang
+            $cartItems = \App\Models\Cart::with(['product.prices', 'product.images'])->where('user_id', \Illuminate\Support\Facades\Auth::id())->get();
+            if ($cartItems->isEmpty()) {
+                return redirect()->route('customer.cart')->with('error', 'Keranjang Anda kosong.');
+            }
+            
+            foreach ($cartItems as $item) {
+                $price = $item->product->prices->where('price_level', 1)->first()->price ?? 0;
+                $checkoutItems[] = (object)[
+                    'id' => $item->product->id,
+                    'name' => $item->product->name,
+                    'brand' => $item->product->brand,
+                    'image' => $item->product->images->first() ? asset('storage/products/' . basename($item->product->images->first()->image_path)) : null,
+                    'qty' => $item->qty,
+                    'price' => $price,
+                    'subtotal' => $price * $item->qty
+                ];
+                $subtotal += $price * $item->qty;
+            }
         }
+
+        // Simulasi Biaya Tambahan (Ala Tokopedia)
+        $ongkosKirim = 26000;
+        $asuransi = 38200;
+        $biayaProteksi = 65000;
+        $biayaLayanan = 2000; // Layanan + Jasa Aplikasi
+        $totalTagihan = $subtotal + $ongkosKirim + $asuransi + $biayaProteksi + $biayaLayanan;
+
+        return view('customer.checkout_summary', compact(
+            'checkoutItems', 'subtotal', 'ongkosKirim', 'asuransi', 'biayaProteksi', 'biayaLayanan', 'totalTagihan', 'productId', 'qty'
+        ));
     }
 
     public function initiatePayment(Request $request)
