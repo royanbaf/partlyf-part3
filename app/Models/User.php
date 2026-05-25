@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-// --- TAMBAHKAN 'role' DI DALAM SINI ---
-#[Fillable(['name', 'email', 'password', 'role'])]
+// Menggunakan PHP Attributes untuk mengizinkan kolom diisi massal lewat User::create
+#[Fillable(['name', 'email', 'password', 'role', 'phone', 'address'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -19,7 +19,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * Get the attributes that should be cast.
+     * Menangani casting otomatis tipe data atribut.
      *
      * @return array<string, string>
      */
@@ -27,9 +27,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password' => 'hashed', // Password otomatis diamankan menggunakan bcrypt hashes
         ];
     }
-
-
 }

@@ -10,7 +10,10 @@
 <body class="bg-[#020617] text-slate-200 flex h-screen overflow-hidden">
 
     @include('layouts.admin-sidebar')
+<<<<<<< HEAD
     
+=======
+>>>>>>> c8d47de4e29a6d6e906a2a0c9be803382d6b537d
 
     <main class="flex-1 overflow-y-auto p-10 relative">
         <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/5 rounded-full filter blur-[120px] pointer-events-none"></div>

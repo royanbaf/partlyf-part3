@@ -62,10 +62,33 @@ Route::middleware('auth')->group(function () {
 // =======================================================================
 // ZONA ADMIN / KASIR PARTLYFE
 // =======================================================================
+<<<<<<< HEAD
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard-pos', function () {
         return '<h1>Selamat Datang di Dashboard Admin & POS Partlyfe!</h1>';
     });
+=======
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Dashboard Utama Admin
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    
+    // Manajemen Produk & Stok
+    Route::get('/products', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('products.index');
+    
+    // Riwayat Transaksi
+    Route::get('/transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])->name('transactions.index');
+    
+    // Manajemen Data Pelanggan
+    Route::get('/customers', [\App\Http\Controllers\Admin\DashboardController::class, 'customers'])->name('customers.index');
+    
+    // DETAIL TRANSAKSI & AKSI UPGRADE B2B PELANGGAN (Tambahan Baru)
+    Route::get('/customers/{id}', [\App\Http\Controllers\Admin\DashboardController::class, 'showCustomer'])->name('customers.show');
+    Route::post('/customers/{id}/upgrade', [\App\Http\Controllers\Admin\DashboardController::class, 'upgradeToB2b'])->name('customers.upgrade');
+    
+    // Kirim Broadcast Promo
+    Route::get('/broadcast', [\App\Http\Controllers\Admin\BroadcastController::class, 'index'])->name('broadcast.index');
+    Route::post('/broadcast', [\App\Http\Controllers\Admin\BroadcastController::class, 'store'])->name('broadcast.store');
+>>>>>>> c8d47de4e29a6d6e906a2a0c9be803382d6b537d
 });
 
 
