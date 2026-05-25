@@ -16,7 +16,7 @@
         .glass-header { 
             background: rgba(255, 255, 255, 0.8); 
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
-            border-b: 1px solid rgba(226, 232, 240, 0.8); 
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8); 
         }
         .luxury-card-flat {
             background: #ffffff;
@@ -28,11 +28,12 @@
 
 <body class="bg-[#f8fafc] font-sans text-slate-700 h-screen overflow-hidden flex">
 
+    {{-- Ambil Sidebar Kiri Bawaan Kamu --}}
     @include('layouts.sidebar')
 
     <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
 
-        {{-- Header --}}
+        {{-- Header Atas --}}
         <header class="h-20 glass-header flex items-center justify-between px-8 flex-shrink-0 z-50">
             <div class="text-sm font-bold text-slate-400">
                 <a href="{{ route('customer.dashboard') }}" class="hover:text-amber-600 transition-colors">Beranda</a>
@@ -40,14 +41,20 @@
                 <span class="text-slate-700">Kabar Admin</span>
             </div>
             
-            <div class="flex items-center gap-4">
-                <a href="{{ route('customer.profile') }}" class="w-9 h-9 bg-gradient-to-br from-amber-400 to-amber-500 text-slate-900 rounded-full flex items-center justify-center font-black text-sm" style="box-shadow: 0 4px 12px rgba(245,158,11,0.2);">
+            <div class="flex items-center gap-5">
+                {{-- Ikon Lonceng (Di halaman ini otomatis tidak ada bintik merah karena semua sudah otomatis terbaca) --}}
+                <a href="{{ route('customer.broadcast') }}" class="relative p-2.5 text-slate-700 bg-slate-100/80 transition-colors rounded-xl flex items-center justify-center">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                </a>
+
+                {{-- Avatar Profil --}}
+                <a href="{{ route('customer.profile') }}" class="w-9 h-9 bg-gradient-to-br from-amber-400 to-amber-500 text-slate-900 rounded-full flex items-center justify-center font-black text-sm transition-transform hover:scale-105" style="box-shadow: 0 4px 12px rgba(245,158,11,0.2);">
                     {{ substr(Auth::user()->name, 0, 1) }}
                 </a>
             </div>
         </header>
 
-        {{-- Main Content Area --}}
+        {{-- Konten Utama List Broadcast --}}
         <main class="flex-1 overflow-y-auto p-8 bg-[#f8fafc]">
             <div class="max-w-[800px] mx-auto">
                 <h1 class="text-2xl font-black text-slate-800 mb-8 flex items-center gap-3">
@@ -57,26 +64,31 @@
                 @if(isset($broadcasts) && $broadcasts->count() > 0)
                     <div class="space-y-6">
                         @foreach($broadcasts as $info)
-                        <div class="luxury-card-flat rounded-3xl p-6 bg-white border border-slate-200/60">
+                        <div class="luxury-card-flat rounded-3xl p-6 bg-white border border-slate-200/60 transition-all hover:shadow-md">
                             {{-- Info Pengirim & Tanggal --}}
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-500 text-xs">
-                                    <i class="fa-solid fa-bullhorn"></i>
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-500 text-xs">
+                                        <i class="fa-solid fa-bullhorn"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-black text-slate-800 uppercase tracking-wider">Official Admin Partlyfe</p>
+                                        <p class="text-[10px] text-slate-400 font-bold mt-0.5">{{ $info->created_at->format('d M Y - H:i') }}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-xs font-black text-slate-800 uppercase tracking-wider">Official Admin Partlyfe</p>
-                                    <p class="text-[10px] text-slate-400 font-bold mt-0.5">{{ $info->created_at->format('d M Y - H:i') }}</p>
-                                </div>
+                                <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full font-black text-[9px] uppercase tracking-wider border border-emerald-100">
+                                    Pesan Baru
+                                </span>
                             </div>
 
-                            {{-- Judul & Isi Kabar --}}
+                            {{-- Judul & Isi Pesan Kabar Admin --}}
                             <h3 class="text-lg font-black text-slate-900 leading-snug mb-3">{{ $info->title }}</h3>
-                            <p class="text-sm text-slate-500 leading-relaxed whitespace-pre-line">{{ $info->content }}</p>
+                            <p class="text-sm text-slate-500 leading-relaxed whitespace-pre-line">{{ $info->message }}</p>
                         </div>
                         @endforeach
                     </div>
                 @else
-                    {{-- Tampilan kalau tidak ada kabar --}}
+                    {{-- Tampilan Kosong --}}
                     <div class="py-20 text-center rounded-2xl border border-slate-200 bg-white shadow-sm">
                         <i class="fa-solid fa-bell-slash text-5xl text-slate-200 mb-4"></i>
                         <p class="text-base text-slate-500 font-bold">Belum ada kabar berita</p>

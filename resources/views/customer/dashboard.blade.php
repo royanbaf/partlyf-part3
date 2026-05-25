@@ -21,7 +21,7 @@
         .glass-header { 
             background: rgba(255, 255, 255, 0.8); 
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
-            border-b: 1px solid rgba(226, 232, 240, 0.8); 
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8); 
         }
         
         .luxury-card {
@@ -57,7 +57,7 @@
             font-size: 1.5rem; cursor: pointer; box-shadow: 0 8px 24px rgba(79, 70, 229, 0.3); z-index: 1999;
             transition: all 0.3s;
         }
-        .floating-ai-btn:hover { transform: scale(1.05); brightness: 110%; }
+        .floating-ai-btn:hover { transform: scale(1.05); filter: brightness(110%); }
     </style>
 </head>
 
@@ -87,14 +87,13 @@
             </div>
             
             <div class="flex items-center gap-5 ml-8 flex-shrink-0">
-                {{-- 🔔 REKOMENDASI DOSEN: LONCENG NOTIFIKASI DI NAVBAR --}}
-                @php
-                    $unreadBroadcasts = Auth::check() ? \App\Models\Broadcast::where('user_id', Auth::id())->where('is_read', false)->count() : 0;
-                @endphp
+                {{-- 🚀 PERBAIKAN UTAMA: LONCENG NOTIFIKASI SINKRON METODE PROMO --}}
                 <a href="{{ Auth::check() ? route('customer.broadcast') : route('login') }}" class="relative text-slate-400 hover:text-amber-500 transition-all flex items-center justify-center w-10 h-10 rounded-xl hover:bg-slate-50">
                     <i class="fa-solid fa-bell text-xl"></i>
-                    @if($unreadBroadcasts > 0)
-                        <span class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full animate-pulse"></span>
+                    @if(isset($hasNotification) && $hasNotification)
+                        <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>
+                    @elseif(\App\Models\Broadcast::where('type', 'promo')->where('is_read', false)->exists())
+                        <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>
                     @endif
                 </a>
 
@@ -210,7 +209,6 @@
                                     
                                     @if(!$isOutofStock)
                                         @auth
-                                        {{-- 🚀 BUG FIXED: Tombol keranjang sekarang murni melakukan POST tambah ke keranjang --}}
                                         <form action="{{ route('cart.add', $prod->id) }}" method="POST">
                                             @csrf
                                             <button type="submit" title="Tambah ke Keranjang" class="w-8 h-8 rounded-xl bg-amber-500 text-slate-900 flex items-center justify-center hover:bg-amber-600 transition-all shadow-sm font-bold text-xs">
@@ -275,7 +273,6 @@
     </div>
 
     <script>
-        // System Live Search Biasa (SQL LIKE)
         const searchInput = document.getElementById('ai-search-input');
         const loadingIcon = document.getElementById('ai-loading');
         const productsGridContainer = document.getElementById('products-grid-container');
@@ -293,12 +290,10 @@
 
             const chatBody = document.getElementById('ai-chat-body');
             
-            // Render Chat User
             chatBody.insertAdjacentHTML('beforeend', `<div class="bg-white border border-slate-200 text-slate-800 rounded-2xl p-3 ml-8 text-right font-semibold">${msg}</div>`);
             input.value = '';
             chatBody.scrollTop = chatBody.scrollHeight;
 
-            // Render Loading AI
             const loadId = 'load-' + Date.now();
             chatBody.insertAdjacentHTML('beforeend', `<div id="${loadId}" class="text-slate-400 font-medium italic"><i class="fa-solid fa-circle-notch fa-spin mr-1"></i>Mekanik sedang menganalisis mesin...</div>`);
 

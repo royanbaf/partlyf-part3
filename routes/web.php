@@ -137,4 +137,7 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
 // Rute untuk Live Search berbasis AI
 Route::get('/api/search-ai', [App\Http\Controllers\CustomerController::class, 'aiSearch'])->name('api.search.ai');
 
+// Pastikan baris ini ada di dalam kelompok/group rute admin kamu:
+Route::post('/admin/broadcast', [App\Http\Controllers\Admin\BroadcastController::class, 'store'])->name('admin.broadcast.store');
+
 require __DIR__.'/auth.php';

@@ -2,12 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Broadcast extends Model
 {
-    //
-    protected $fillable = ['user_id', 'title', 'message', 'type', 'is_read'];
+    use HasFactory;
 
-     public function user() { return $this->belongsTo(User::class); }
+    // 🚀 SINKRONISASI KUNCI: Pastikan nama tabelnya huruf kecil semua sesuai phpMyAdmin
+    protected $table = 'broadcasts';
+
+    protected $fillable = [
+        'user_id', // 🚀 Tambahkan ini
+        'title',
+        'message',
+        'type',    // 🚀 Tambahkan ini
+        'is_read',
+    ];
 }
