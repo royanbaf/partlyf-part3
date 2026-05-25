@@ -32,14 +32,8 @@
 @endif
 
 <style>
-    /* Reset warna global body agar murni abu-abu terang minimalis */
     body { background-color: #f8fafc !important; color: #334155 !important; }
-    
-    /* Panel navigasi samping putih bersih premium */
-    .luxury-sidebar { 
-        background: #ffffff; 
-        border-right: 1px solid #e2e8f0; 
-    }
+    .luxury-sidebar { background: #ffffff; border-right: 1px solid #e2e8f0; }
 </style>
 
 <aside class="w-72 luxury-sidebar text-slate-600 flex flex-col h-full z-20 flex-shrink-0 relative">
@@ -50,9 +44,9 @@
     </div>
 
     <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1 relative z-10">
-        <p class="px-4 text-[10px] font-bold text-slate-400 url uppercase tracking-widest mb-2 mt-2">Menu Utama</p>
+        <p class="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 mt-2">Menu Utama</p>
         
-        <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all {{ request()->routeIs('customer.dashboard') || request()->routeIs('product.detail') ? 'bg-amber-500/10 text-amber-800 border border-amber-500/20 shadow-sm' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-transparent' }}">
+        <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all {{ request()->routeIs('customer.dashboard') || request()->routeIs('product.detail') || request()->routeIs('customer.cart') || request()->routeIs('customer.checkout') ? 'bg-amber-500/10 text-amber-800 border border-amber-500/20 shadow-sm' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-transparent' }}">
             <i class="fa-solid fa-store w-5 text-center text-sm"></i> Katalog Produk
         </a>
 
@@ -60,17 +54,11 @@
             <i class="fa-solid fa-receipt w-5 text-center text-sm"></i> Transaksi Saya
         </a>
 
-        <a href="{{ Auth::check() ? route('customer.broadcast') : route('login') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all {{ request()->routeIs('customer.broadcast') ? 'bg-amber-500/10 text-amber-800 border border-amber-500/20 shadow-sm' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-transparent' }}">
-            <i class="fa-solid fa-tower-broadcast w-5 text-center text-sm"></i> Kabar Admin
-        </a>
-
-        <a href="{{ Auth::check() ? route('customer.ai-chat') : route('login') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all mt-2 relative overflow-hidden group border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 hover:shadow-sm">
-            <i class="fa-solid fa-robot w-5 text-center text-sm text-indigo-500"></i>
-            <span>Tanya Mekanik AI</span>
+        <a href="{{ Auth::check() ? route('customer.profile') : route('login') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all {{ request()->routeIs('customer.profile') ? 'bg-amber-500/10 text-amber-800 border border-amber-500/20 shadow-sm' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-transparent' }}">
+            <i class="fa-solid fa-user-gear w-5 text-center text-sm"></i> Profil Saya
         </a>
     </div>
 
-    {{-- FOOTER SIDEBAR --}}
     @auth
         <div class="p-4 border-t border-slate-100 bg-slate-50/50">
             <form method="POST" action="{{ route('logout') }}">
