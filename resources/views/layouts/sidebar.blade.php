@@ -1,78 +1,92 @@
-@if(session('success') || session('error'))
-    @php
-        $isError = session('error');
-        $msg = session('success') ?? session('error');
-    @endphp
-    <div id="global-toast" class="fixed top-10 left-1/2 transform -translate-x-1/2 z-[9999] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(148,163,184,0.15)] backdrop-blur-md toast-enter {{ $isError ? 'bg-rose-50 border border-rose-200 text-rose-600' : 'bg-emerald-50 border border-emerald-200 text-emerald-600' }}">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center {{ $isError ? 'bg-rose-100' : 'bg-emerald-100' }}">
-            <i class="fa-solid {{ $isError ? 'fa-xmark' : 'fa-check' }} text-sm"></i>
-        </div>
-        <p class="font-bold text-sm tracking-wide">{{ $msg }}</p>
-    </div>
-
-    <style>
-        @keyframes slideDownFade {
-            0% { opacity: 0; transform: translate(-50%, -20px); }
-            100% { opacity: 1; transform: translate(-50%, 0); }
-        }
-        .toast-enter { animation: slideDownFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    </style>
-
-    <script>
-        setTimeout(() => {
-            const toast = document.getElementById('global-toast');
-            if(toast) {
-                toast.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-                toast.style.opacity = '0';
-                toast.style.transform = 'translate(-50%, -20px)';
-                setTimeout(() => toast.remove(), 500);
-            }
-        }, 3000);
-    </script>
-@endif
-
 <style>
-    body { background-color: #f8fafc !important; color: #334155 !important; }
-    .luxury-sidebar { background: #ffffff; border-right: 1px solid #e2e8f0; }
+    /* Batas visual pembatas sidebar yang jelas dan tegas */
+    .luxury-sidebar { 
+        background: #ffffff; 
+        border-right: 1px solid #e2e8f0; 
+    }
+
+    .sidebar-link-active {
+        background-color: #f4f4f5 !important;
+        color: #121212 !important;
+        font-weight: 700;
+        border-left: 3px solid #c5a880 !important;
+    }
 </style>
 
-<aside class="w-72 luxury-sidebar text-slate-600 flex flex-col h-full z-20 flex-shrink-0 relative">
+<aside id="main-sidebar" class="w-72 luxury-sidebar text-slate-400 flex flex-col h-full z-50 flex-shrink-0 relative font-sans transition-all duration-300">
+    
+    {{-- Brand Header Logo Partlyfe --}}
     <div class="h-20 flex items-center px-8 border-b border-slate-100">
-        <a href="{{ route('customer.dashboard') }}" class="text-2xl font-black text-slate-800 tracking-tighter">
-            PARTLYFE<span class="text-amber-500">.</span>
+        <a href="{{ route('customer.dashboard') }}" class="text-base font-bold tracking-[0.25em] text-slate-900 uppercase">
+            PART<span class="text-[#c5a880]">LYFE</span>
         </a>
     </div>
 
-    <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1 relative z-10">
-        <p class="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 mt-2">Menu Utama</p>
+    {{-- Daftar Menu Utama (Susunan Versi Lama, Tampilan Gaya Baru) --}}
+    <div class="flex-1 overflow-y-auto py-8 px-4 space-y-1 relative z-10">
+        <p class="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Menu Utama</p>
         
-        <a href="{{ route('customer.dashboard') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all {{ request()->routeIs('customer.dashboard') || request()->routeIs('product.detail') || request()->routeIs('customer.cart') || request()->routeIs('customer.checkout') ? 'bg-amber-500/10 text-amber-800 border border-amber-500/20 shadow-sm' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-transparent' }}">
-            <i class="fa-solid fa-store w-5 text-center text-sm"></i> Katalog Produk
+        {{-- Menu 1: Katalog Produk --}}
+        <a href="{{ route('customer.dashboard') }}" 
+           class="flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-widest border border-transparent transition-all duration-200 hover:bg-slate-50 hover:text-slate-900
+           {{ request()->routeIs('customer.dashboard') || request()->routeIs('product.detail') ? 'sidebar-link-active' : '' }}">
+            <i class="fa-solid fa-store w-5 text-center text-sm {{ request()->routeIs('customer.dashboard') || request()->routeIs('product.detail') ? 'text-[#c5a880]' : 'text-slate-400' }}"></i> 
+            Katalog Produk
         </a>
 
-        <a href="{{ Auth::check() ? route('customer.transactions') : route('login') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all {{ request()->routeIs('customer.transactions') ? 'bg-amber-500/10 text-amber-800 border border-amber-500/20 shadow-sm' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-transparent' }}">
-            <i class="fa-solid fa-receipt w-5 text-center text-sm"></i> Transaksi Saya
+        {{-- Menu 2: Transaksi Saya --}}
+        <a href="{{ Auth::check() ? route('customer.transactions') : route('login') }}" 
+           class="flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-widest border border-transparent transition-all duration-200 hover:bg-slate-50 hover:text-slate-900
+           {{ request()->routeIs('customer.transactions') ? 'sidebar-link-active' : '' }}">
+            <i class="fa-solid fa-receipt w-5 text-center text-sm {{ request()->routeIs('customer.transactions') ? 'text-[#c5a880]' : 'text-slate-400' }}"></i> 
+            Transaksi Saya
         </a>
 
-        <a href="{{ Auth::check() ? route('customer.profile') : route('login') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all {{ request()->routeIs('customer.profile') ? 'bg-amber-500/10 text-amber-800 border border-amber-500/20 shadow-sm' : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-transparent' }}">
-            <i class="fa-solid fa-user-gear w-5 text-center text-sm"></i> Profil Saya
+        {{-- Menu 3: Profil Saya --}}
+        <a href="{{ Auth::check() ? route('customer.profile') : route('login') }}" 
+           class="flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-widest border border-transparent transition-all duration-200 hover:bg-slate-50 hover:text-slate-900
+           {{ request()->routeIs('customer.profile') ? 'sidebar-link-active' : '' }}">
+            <i class="fa-solid fa-user-gear w-5 text-center text-sm {{ request()->routeIs('customer.profile') ? 'text-[#c5a880]' : 'text-slate-400' }}"></i> 
+            Profil Saya
+        </a>
+
+        {{-- Komponen Tambahan Tombol Mekanik AI --}}
+        <a href="{{ Auth::check() ? route('customer.ai-chat') : route('login') }}" 
+           class="flex items-center gap-3.5 px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all duration-200 mt-4 border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 shadow-sm
+           {{ request()->routeIs('customer.ai-chat') ? 'border-[#c5a880] bg-[#f5f2eb]/40' : '' }}">
+            <i class="fa-solid fa-robot w-5 text-center text-sm text-[#c5a880]"></i>
+            <span>Mekanik AI (Full Screen)</span>
         </a>
     </div>
 
+    {{-- Footer Area Tombol Masuk / Keluar Bawaan Kamu --}}
     @auth
-        <div class="p-4 border-t border-slate-100 bg-slate-50/50">
+        <div class="p-4 border-t border-slate-100 bg-slate-50/40">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 font-bold hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-colors text-xs uppercase tracking-wider">
-                    <i class="fa-solid fa-right-from-bracket"></i> Keluar
+                <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all duration-300 text-xs uppercase tracking-widest">
+                    <i class="fa-solid fa-right-from-bracket text-xs"></i> Keluar
                 </button>
             </form>
         </div>
     @else
-        <div class="p-4 border-t border-slate-100 bg-slate-50/50">
-            <a href="{{ route('login') }}" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-slate-900 font-bold hover:bg-amber-600 hover:text-white transition-colors text-xs uppercase tracking-wider shadow-sm">
-                <i class="fa-solid fa-right-to-bracket"></i> Masuk
+        <div class="p-4 border-t border-slate-100 bg-slate-50/40">
+            <a href="{{ route('login') }}" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-900 text-white font-semibold hover:bg-[#c5a880] transition-all duration-300 text-xs uppercase tracking-widest">
+                <i class="fa-solid fa-right-to-bracket text-xs"></i> Masuk
             </a>
         </div>
     @endauth
 </aside>
+
+<script>
+    (function () {
+        const state = localStorage.getItem('sidebarState');
+        const sidebar = document.getElementById('main-sidebar');
+        if (sidebar && state === 'hidden') {
+            sidebar.style.transition = 'none';
+            sidebar.classList.remove('w-72', 'px-4');
+            sidebar.classList.add('w-0', 'overflow-hidden', 'border-r-0');
+            setTimeout(() => { sidebar.style.transition = ''; }, 50);
+        }
+    })();
+</script>

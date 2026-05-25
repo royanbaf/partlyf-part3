@@ -1,245 +1,211 @@
-    <!DOCTYPE html>
-    <html lang="id" class="scroll-smooth">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Partlyfe | Ekosistem Suku Cadang Masa Depan</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PartLyfe | Premium Motorcycle Components</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            background-color: #fafafa; 
+            color: #121212; 
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        /* Aksen warna emas premium (Champagne / Cast Gold) */
+        .text-gold { color: #c5a880; }
+        .bg-gold { background-color: #c5a880; }
+        .border-gold { border-color: #c5a880; }
         
-        <!-- ZONA FLEXING CSS CUSTOM (ANIMASI DEWA) -->
-        <style>
-            /* Animasi Blob Bergerak */
-            @keyframes blob {
-                0% { transform: translate(0px, 0px) scale(1); }
-                33% { transform: translate(30px, -50px) scale(1.1); }
-                66% { transform: translate(-20px, 20px) scale(0.9); }
-                100% { transform: translate(0px, 0px) scale(1); }
-            }
-            .animate-blob {
-                animation: blob 7s infinite;
-            }
-            .animation-delay-2000 { animation-delay: 2s; }
-            .animation-delay-4000 { animation-delay: 4s; }
+        /* Card minimalis dengan transisi halus */
+        .premium-card {
+            background-color: #ffffff;
+            border: 1px solid #eaeaea;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .premium-card:hover {
+            border-color: #c5a880;
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(197, 168, 128, 0.05);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-[#c5a880] selection:text-white">
 
-            /* Animasi Teks Berjalan (Marquee) */
-            @keyframes marquee {
-                0% { transform: translateX(0%); }
-                100% { transform: translateX(-100%); }
-            }
-            .animate-marquee {
-                display: inline-block;
-                white-space: nowrap;
-                animation: marquee 20s linear infinite;
-            }
+    <header class="w-full bg-white/80 backdrop-blur sticky top-0 z-50 border-b border-gray-100">
+        <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="/" class="text-base font-bold tracking-[0.3em] text-gray-900 uppercase">
+                PART<span class="text-gold">LYFE</span>
+            </a>
+            
+            <nav class="hidden md:flex items-center gap-10 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400">
+                <a href="#" class="text-gray-900 border-b border-gray-900 pb-1">Katalog Produk</a>
+                <a href="#" class="hover:text-gray-900 transition">Manajemen Stok</a>
+                <a href="#" class="hover:text-gray-900 transition">Rekomendasi Pintar</a>
+                <a href="#" class="hover:text-gray-900 transition">Kemitraan B2B</a>
+            </nav>
 
-            /* Efek Kaca (Glassmorphism) */
-            .glass-panel {
-                background: rgba(15, 23, 42, 0.6);
-                backdrop-filter: blur(16px);
-                -webkit-backdrop-filter: blur(16px);
-                border: 1px solid rgba(255, 255, 255, 0.05);
-                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            }
-
-            /* Gradient Text Animasi */
-            .text-gradient-animate {
-                background-size: 200% auto;
-                color: transparent;
-                background-clip: text;
-                -webkit-background-clip: text;
-                animation: gradient-shift 3s ease infinite;
-            }
-            @keyframes gradient-shift {
-                0% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-                100% { background-position: 0% 50%; }
-            }
-
-            body { background-color: #020617; color: white; overflow-x: hidden; }
-        </style>
-    </head>
-    <body class="antialiased selection:bg-amber-500 selection:text-slate-900">
-
-        <!-- HEADER GLASSMORPHISM -->
-        <header class="fixed top-0 w-full z-50 glass-panel border-b-0 border-white/10 transition-all duration-300">
-            <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                <a href="/" class="text-3xl font-black text-white tracking-tighter" data-aos="fade-right">
-                    PARTLYFE<span class="text-amber-500">.</span>
+            <div class="flex items-center gap-6">
+                <a href="{{ route('login') }}" class="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 hover:text-gray-900 transition">Sign In</a>
+                <a href="{{ route('register') }}" class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white bg-gray-900 hover:bg-[#c5a880] px-6 py-3 transition duration-300">
+                    Register
                 </a>
-                <div class="flex items-center gap-4" data-aos="fade-left">
-                    @auth
-                        <a href="{{ route('customer.dashboard') }}" class="font-bold text-slate-300 hover:text-amber-500 transition px-4 py-2">Dashboard Utama</a>
-                    @else
-                        <a href="{{ route('login') }}" class="font-bold text-slate-300 hover:text-amber-500 transition px-4 py-2">Log In</a>
-                        <a href="{{ route('register') }}" class="relative group inline-flex items-center justify-center px-6 py-2.5 font-bold text-slate-900 bg-white rounded-full overflow-hidden transition-all hover:scale-105">
-                            <span class="absolute w-0 h-0 transition-all duration-500 ease-out bg-amber-500 rounded-full group-hover:w-56 group-hover:h-56"></span>
-                            <span class="relative">Bergabung</span>
-                        </a>
-                    @endauth
-                </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <!-- HERO SECTION DENGAN ANIMATED BLOBS -->
-        <section class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
-            
-            <!-- Blobs Background (Flexing Element) -->
-            <div class="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-screen filter blur-[100px] opacity-50 animate-blob"></div>
-            <div class="absolute top-0 -right-4 w-72 h-72 bg-amber-500 rounded-full mix-blend-screen filter blur-[100px] opacity-50 animate-blob animation-delay-2000"></div>
-            <div class="absolute -bottom-8 left-20 w-72 h-72 bg-rose-500 rounded-full mix-blend-screen filter blur-[100px] opacity-50 animate-blob animation-delay-4000"></div>
-            
-            <!-- Grid Pattern Overlay -->
-            <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none"></div>
-            <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-
-            <div class="relative z-10 max-w-5xl mx-auto px-6 text-center">
-                
-                <div data-aos="zoom-in" data-aos-duration="1000">
-                    <span class="inline-flex items-center gap-2 glass-panel border border-amber-500/30 text-amber-400 font-bold text-xs px-5 py-2.5 rounded-full uppercase tracking-widest shadow-[0_0_20px_rgba(245,158,11,0.2)] mb-8">
-                        <span class="relative flex h-2 w-2 mr-1"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span></span>
-                        Ekosistem B2C & B2B Aktif
-                    </span>
-                </div>
-                
-                <h1 class="text-6xl md:text-8xl font-black text-white leading-[1.1] tracking-tighter mb-8" data-aos="fade-up" data-aos-duration="1200" data-aos-delay="200">
-                    Revolusi Suku Cadang <br>
-                    <span class="text-gradient-animate bg-gradient-to-r from-amber-400 via-rose-500 to-purple-500">Era Digital.</span>
-                </h1>
-                
-                <p class="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed" data-aos="fade-up" data-aos-duration="1200" data-aos-delay="400">
-                    Meninggalkan rantai pasok konvensional. Dapatkan suku cadang kendaraan 100% original dengan harga distributor, langsung dari ujung jarimu.
-                </p>
-                
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-6" data-aos="fade-up" data-aos-duration="1200" data-aos-delay="600">
-                    <a href="{{ route('customer.dashboard') }}" class="group relative px-8 py-4 font-black text-slate-900 bg-amber-500 rounded-full overflow-hidden shadow-[0_0_40px_rgba(245,158,11,0.4)] hover:shadow-[0_0_60px_rgba(245,158,11,0.6)] transition-all hover:-translate-y-1 w-full sm:w-auto">
-                        <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-amber-400 to-amber-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <span class="relative flex items-center justify-center gap-2">Jelajahi Katalog <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i></span>
-                    </a>
-                </div>
-            </div>
-        </section>
-
-        <!-- RUNNING TEXT (INFINITE MARQUEE) -->
-        <div class="border-y border-white/10 bg-white/5 py-4 overflow-hidden relative backdrop-blur-sm">
-            <div class="animate-marquee flex gap-12 whitespace-nowrap text-slate-400 font-bold tracking-widest uppercase text-sm">
-                <span><i class="fa-solid fa-star text-amber-500"></i> 100% Garansi Original</span>
-                <span><i class="fa-solid fa-bolt text-amber-500"></i> Pengiriman Instan</span>
-                <span><i class="fa-solid fa-robot text-amber-500"></i> Konsultasi AI 24/7</span>
-                <span><i class="fa-solid fa-shield-halved text-amber-500"></i> Pembayaran Aman</span>
-                <!-- Duplicate for infinite effect -->
-                <span><i class="fa-solid fa-star text-amber-500"></i> 100% Garansi Original</span>
-                <span><i class="fa-solid fa-bolt text-amber-500"></i> Pengiriman Instan</span>
-                <span><i class="fa-solid fa-robot text-amber-500"></i> Konsultasi AI 24/7</span>
-                <span><i class="fa-solid fa-shield-halved text-amber-500"></i> Pembayaran Aman</span>
+    <section class="max-w-6xl mx-auto px-6 pt-20 pb-28 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+        <div class="lg:col-span-5 space-y-6">
+            <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-gold block">
+                Premium Component Registry
+            </span>
+            <h1 class="text-4xl sm:text-5xl font-light text-gray-900 tracking-tight leading-[1.15]">
+                Suku Cadang Terbaik.<br>
+                <span class="font-bold">Presisi Tanpa Batas.</span>
+            </h1>
+            <p class="text-gray-400 text-sm leading-relaxed max-w-sm font-light">
+                Akses langsung ke pusat manajemen suku cadang motor original. Dirancang khusus untuk performa tinggi, ketahanan maksimal, dan transparansi harga distributor.
+            </p>
+            <div class="pt-4">
+                <a href="{{ route('customer.dashboard') }}" class="inline-flex items-center gap-4 text-[11px] font-semibold uppercase tracking-[0.2em] bg-gray-900 text-white hover:bg-[#c5a880] px-8 py-4 transition duration-300">
+                    Buka Katalog <i class="fa-solid fa-arrow-right text-[10px] opacity-60"></i>
+                </a>
             </div>
         </div>
 
-        <!-- BENTO GRID SECTION (FLEXING TINGKAT TINGGI) -->
-        <section class="py-32 px-6 relative">
-            <div class="max-w-7xl mx-auto">
-                <div class="text-center mb-20">
-                    <h2 class="text-4xl md:text-6xl font-black mb-6" data-aos="fade-up">Kenapa <span class="text-amber-500">Partlyfe?</span></h2>
-                    <p class="text-slate-400 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="100">Bukan sekadar toko sparepart biasa. Kami membangun ekosistem dengan teknologi terkini untuk memastikan pengalaman terbaik.</p>
+        <div class="lg:col-span-7 grid grid-cols-12 gap-4 h-[400px] sm:h-[480px]">
+            <div class="col-span-8 bg-white border border-gray-200 p-8 flex flex-col justify-between relative group cursor-pointer">
+                <span class="text-[10px] text-gray-300 font-medium tracking-widest">COLLECTION 2026</span>
+                <div class="w-full flex justify-center py-8 text-gray-200 group-hover:text-gold transition-colors duration-500">
+                    <i class="fa-solid fa-gear text-7xl opacity-40"></i>
                 </div>
-
-                <!-- Asymmetric Bento Grid Layout -->
-                <div class="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 h-auto md:h-[600px]">
-                    
-                    <!-- Box 1 (Besar Kiri) -->
-                    <div class="md:col-span-2 md:row-span-1 glass-panel rounded-3xl p-8 relative overflow-hidden group hover:border-amber-500/50 transition-colors duration-500" data-aos="fade-up" data-aos-delay="100">
-                        <div class="absolute -right-20 -top-20 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl group-hover:bg-amber-500/40 transition-colors"></div>
-                        <i class="fa-solid fa-microchip text-4xl text-amber-500 mb-6 relative z-10"></i>
-                        <h3 class="text-2xl font-bold mb-3 relative z-10">Algoritma Prediksi Stok (ARIMA)</h3>
-                        <p class="text-slate-400 relative z-10 w-2/3">Sistem kami terintegrasi dengan Machine Learning untuk memprediksi kapan suatu barang akan habis dan kapan harus restock. Kamu tidak akan pernah kehabisan barang penting.</p>
-                    </div>
-
-                    <!-- Box 2 (Kanan Atas) -->
-                    <div class="md:col-span-1 md:row-span-1 glass-panel rounded-3xl p-8 relative overflow-hidden group hover:border-purple-500/50 transition-colors duration-500" data-aos="fade-up" data-aos-delay="200">
-                        <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl group-hover:bg-purple-500/40 transition-colors"></div>
-                        <i class="fa-solid fa-robot text-4xl text-purple-400 mb-6 relative z-10"></i>
-                        <h3 class="text-2xl font-bold mb-3 relative z-10">Mekanik AI Pribadi</h3>
-                        <p class="text-slate-400 relative z-10">Tanya kendala motormu kapan saja. Chatbot cerdas kami siap memberikan rekomendasi parts yang tepat 24/7.</p>
-                    </div>
-
-                    <!-- Box 3 (Kiri Bawah) -->
-                    <div class="md:col-span-1 md:row-span-1 glass-panel rounded-3xl p-8 relative overflow-hidden group hover:border-rose-500/50 transition-colors duration-500" data-aos="fade-up" data-aos-delay="300">
-                        <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-rose-500/20 rounded-full blur-3xl group-hover:bg-rose-500/40 transition-colors"></div>
-                        <h3 class="text-5xl font-black text-rose-500 mb-2 relative z-10 counter" data-target="15000">0</h3>
-                        <h4 class="text-xl font-bold mb-2 relative z-10">Parts Tersedia</h4>
-                        <p class="text-slate-400 text-sm relative z-10">Dari baut terkecil hingga blok mesin rakitan utuh.</p>
-                    </div>
-
-                    <!-- Box 4 (Kanan Bawah Lebar) -->
-                    <div class="md:col-span-2 md:row-span-1 glass-panel rounded-3xl p-8 relative overflow-hidden group hover:border-emerald-500/50 transition-colors duration-500 flex flex-col justify-end" data-aos="fade-up" data-aos-delay="400">
-                        <div class="absolute inset-0 bg-gradient-to-t from-emerald-900/40 to-transparent z-0"></div>
-                        <div class="relative z-10">
-                            <i class="fa-solid fa-truck-fast text-4xl text-emerald-400 mb-4"></i>
-                            <h3 class="text-2xl font-bold mb-2">Rantai Distribusi Tanpa Batas</h3>
-                            <p class="text-slate-400">Integrasi langsung ke gudang utama Sinar Jaya Motor menjamin harga tangan pertama untuk pembeli B2C maupun B2B.</p>
-                        </div>
-                    </div>
-
+                <div>
+                    <span class="text-[9px] font-bold uppercase tracking-widest text-gold block mb-1">Komponen Mesin</span>
+                    <h3 class="font-bold text-base text-gray-900 tracking-tight">Piston & Kopling Ganda Matic</h3>
                 </div>
             </div>
-        </section>
-
-        <!-- FOOTER SIMPLE ELEGANT -->
-        <footer class="border-t border-white/10 bg-[#020617] pt-16 pb-8">
-            <div class="max-w-7xl mx-auto px-6 text-center">
-                <h2 class="text-3xl font-black text-white mb-6">Mulai Transaksi Pertamamu.</h2>
-                <a href="{{ route('customer.dashboard') }}" class="inline-block border border-white/20 text-white font-bold px-8 py-3 rounded-full hover:bg-white hover:text-slate-900 transition mb-16">
-                    Buka Etalase
-                </a>
-                <p class="text-slate-600 text-sm">© 2026 Partlyfe Core System. Build by Lennard Lucius Huang.</p>
+            
+            <div class="col-span-4 flex flex-col gap-4 h-full">
+                <div class="h-1/2 bg-white border border-gray-200 p-6 flex flex-col justify-between hover:border-gold transition-colors">
+                    <i class="fa-solid fa-circle-nodes text-2xl text-gray-300"></i>
+                    <h4 class="font-bold text-xs text-gray-900 uppercase tracking-wider">Sistem CVT</h4>
+                </div>
+                <div class="h-1/2 bg-white border border-gray-200 p-6 flex flex-col justify-between hover:border-gold transition-colors">
+                    <i class="fa-solid fa-droplet text-2xl text-gray-300"></i>
+                    <h4 class="font-bold text-xs text-gray-900 uppercase tracking-wider">Cairan Fluida</h4>
+                </div>
             </div>
-        </footer>
+        </div>
+    </section>
 
-        <!-- SCRIPTS -->
-        <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-        <script>
-            // 1. Inisialisasi AOS (Animasi Scroll)
-            AOS.init({
-                once: true, 
-                offset: 50,
-                duration: 800,
-                easing: 'ease-out-cubic',
-            });
+    <section class="max-w-6xl mx-auto px-6 py-20 border-t border-gray-200">
+        <div class="flex flex-col sm:flex-row sm:items-baseline justify-between mb-16 gap-4">
+            <div>
+                <h2 class="text-xl font-bold uppercase tracking-wider text-gray-900">Kategori Pilihan</h2>
+                <p class="text-xs text-gray-400 mt-1">Suku cadang yang dikelompokkan berdasarkan fungsionalitas sistem motor.</p>
+            </div>
+            <div class="flex gap-8 text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
+                <span class="text-gray-900 border-b border-gray-900 pb-2 cursor-pointer">Honda Series</span>
+                <span class="hover:text-gray-900 cursor-pointer transition">Yamaha Series</span>
+                <span class="hover:text-gray-900 cursor-pointer transition">Suzuki Series</span>
+            </div>
+        </div>
 
-            // 2. Logika Animasi JS Counter (FLEXING DOM MANIPULATION)
-            const counters = document.querySelectorAll('.counter');
-            const speed = 200; // Semakin kecil semakin cepat
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="space-y-4 cursor-pointer group">
+                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative">
+                    <i class="fa-solid fa-circle-notch text-4xl opacity-40 group-hover:text-gold transition-colors"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-xs uppercase tracking-widest text-gray-900">Drive System & CVT</h3>
+                    <p class="text-xs text-gray-400 mt-0.5">V-Belt, Roller, Komponen Matik</p>
+                </div>
+            </div>
+            <div class="space-y-4 cursor-pointer group">
+                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative">
+                    <i class="fa-solid fa-cubes text-4xl opacity-40 group-hover:text-gold transition-colors"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-xs uppercase tracking-widest text-gray-900">Komponen Mesin</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Piston Kit, Stang Seher, Blok Cylinder</p>
+                </div>
+            </div>
+            <div class="space-y-4 cursor-pointer group">
+                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative">
+                    <i class="fa-solid fa-bolt-lightning text-4xl opacity-40 group-hover:text-gold transition-colors"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-xs uppercase tracking-widest text-gray-900">Kelistrikan</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Aki, Busi Iridium, CDI Pengapian</p>
+                </div>
+            </div>
+            <div class="space-y-4 cursor-pointer group">
+                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative">
+                    <i class="fa-solid fa-shield text-4xl opacity-40 group-hover:text-gold transition-colors"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-xs uppercase tracking-widest text-gray-900">Sistem Pengereman</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Cakram, Kaliper, Kampas Rem</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-            // Fungsi mengecek apakah elemen terlihat di layar
-            const isElementInViewport = (el) => {
-                const rect = el.getBoundingClientRect();
-                return (rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight));
-            };
+    <section class="max-w-6xl mx-auto px-6 py-20 border-t border-gray-200 mb-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-sm">
+            <div class="space-y-3">
+                <span class="text-gold font-bold text-xs tracking-widest block">01 / LOGISTICS</span>
+                <h3 class="font-bold text-base text-gray-900 uppercase tracking-tight">Manajemen Stok Terencana</h3>
+                <p class="text-gray-400 text-xs leading-relaxed font-light">
+                    Sistem kami menganalisis data historis permintaan secara berkala guna memastikan pasokan komponen motor krusial selalu tersedia tepat waktu sebelum stok menipis.
+                </p>
+            </div>
+            <div class="space-y-3">
+                <span class="text-gold font-bold text-xs tracking-widest block">02 / ASSISTANCE</span>
+                <h3 class="font-bold text-base text-gray-900 uppercase tracking-tight">Rekomendasi Pintar</h3>
+                <p class="text-gray-400 text-xs leading-relaxed font-light">
+                    Membantu Anda mengidentifikasi jenis dan kode suku cadang yang paling presisi sesuai dengan keluhan kendala teknis kendaraan Anda tanpa risiko salah beli.
+                </p>
+            </div>
+            <div class="space-y-3">
+                <span class="text-gold font-bold text-xs tracking-widest block">03 / DIRECT SOURCE</span>
+                <h3 class="font-bold text-base text-gray-900 uppercase tracking-tight">Harga Tangan Pertama</h3>
+                <p class="text-gray-400 text-xs leading-relaxed font-light">
+                    Menghubungkan langsung ke pusat suplai utama untuk memastikan kestabilan harga komponen, transparansi produk, dan keaslian 100% suku cadang.
+                </p>
+            </div>
+        </div>
+    </section>
 
-            const runCounter = () => {
-                counters.forEach(counter => {
-                    if(isElementInViewport(counter) && !counter.classList.contains('counted')) {
-                        counter.classList.add('counted'); // Cegah jalan 2x
-                        const updateCount = () => {
-                            const target = +counter.getAttribute('data-target');
-                            const count = +counter.innerText;
-                            const inc = target / speed;
+    <footer class="bg-[#121212] text-gray-400 py-16 px-6">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-xs border-b border-gray-800 pb-12">
+            <div class="space-y-3">
+                <span class="font-bold text-white tracking-[0.25em] uppercase">PART<span class="text-gold">LYFE</span></span>
+                <p class="text-[11px] text-gray-500 leading-relaxed">Platform ekosistem distribusi suku cadang sepeda motor berstandar tinggi dan tepercaya.</p>
+            </div>
+            <div class="space-y-2">
+                <h4 class="font-bold text-white uppercase tracking-wider text-[10px] text-gold">Layanan</h4>
+                <p class="hover:text-white cursor-pointer transition">Eceran Konsumen (B2C)</p>
+                <p class="hover:text-white cursor-pointer transition">Grosir Bengkel (B2B)</p>
+            </div>
+            <div class="space-y-2">
+                <h4 class="font-bold text-white uppercase tracking-wider text-[10px] text-gold">Fitur Sistem</h4>
+                <p class="hover:text-white cursor-pointer transition">Pemantau Tren Suplai</p>
+                <p class="hover:text-white cursor-pointer transition">Asisten Identifikasi Part</p>
+            </div>
+            <div class="space-y-2">
+                <h4 class="font-bold text-white uppercase tracking-wider text-[10px] text-gold">Informasi</h4>
+                <p class="hover:text-white cursor-pointer transition">Hubungi Manajemen</p>
+            </div>
+        </div>
+        <div class="max-w-6xl mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-600">
+            <div>©️ 2026 PartLyfe Core System. Built by Lennard Lucius Huang. All rights reserved.</div>
+            <div class="mt-2 sm:mt-0">Surabaya, Indonesia</div>
+        </div>
+    </footer>
 
-                            if (count < target) {
-                                counter.innerText = Math.ceil(count + inc);
-                                setTimeout(updateCount, 15);
-                            } else {
-                                counter.innerText = target.toLocaleString('id-ID') + "+";
-                            }
-                        };
-                        updateCount();
-                    }
-                });
-            };
-
-            // Jalankan saat discroll
-            window.addEventListener('scroll', runCounter);
-        </script>
-    </body>
-    </html>
+</body>
+</html>
