@@ -171,29 +171,31 @@ class CustomerController extends Controller
         // 1. Ambil parameter filter status dari URL (contoh: ?status=menunggu)
         $statusFilter = $request->query('status');
 
-        // 2. Bangun query dasar transaksi milik user yang login
+        // 2. Bangun query dasar transaksi milik user yang login beserta rincian itemnya
         $query = Transaction::with('details.product')
             ->where('user_id', Auth::id());
 
-        // 3. 🧠 LOGIKA FILTER PINTAR
+        // 3. 🧠 SINKRONISASI FILTER TAB BAHASA INDONESIA DENGAN DROPDOWN ADMIN
         if ($statusFilter) {
             if ($statusFilter == 'menunggu') {
-                $query->whereIn('status', ['pending', 'unpaid', 'menunggu']);
+                $query->whereIn('status', ['Menunggu Pembayaran', 'pending', 'unpaid', 'menunggu']);
             } elseif ($statusFilter == 'diproses') {
-                $query->where('status', 'processing');
+                $query->whereIn('status', ['Sedang Diproses', 'processing', 'diproses']);
+            } elseif ($statusFilter == 'selesai') {
+                $query->whereIn('status', ['Selesai', 'success', 'settlement']);
             } elseif ($statusFilter == 'gagal') {
-                $query->whereIn('status', ['expire', 'cancel', 'gagal']);
+                $query->whereIn('status', ['Dibatalkan', 'expire', 'cancel', 'gagal']);
             } else {
                 $query->where('status', $statusFilter);
             }
         }
 
         // 4. 🔥 EKSEKUSI DENGAN PAGINATION
-        $transactions = $query->latest()->paginate(10);
+        $transactions = $query->latest('created_at')->paginate(10);
             
         return view('customer.transactions', compact('transactions', 'statusFilter'));
     }
-
+    
     // ==========================================================
     // 5. AREA KABAR ADMIN (BROADCAST) - VERSI SINKRON 100%
     // ==========================================================

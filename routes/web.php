@@ -38,7 +38,7 @@ Route::get('/product/{id}', [CustomerController::class, 'show'])->name('product.
 
 
 // =======================================================================
-// ZONA AUTH & ROLE 
+// ZONA AUTH & ROLE LAYER UTAMA
 // =======================================================================
 Route::middleware('auth')->group(function () {
     
@@ -60,35 +60,27 @@ Route::middleware('auth')->group(function () {
 
 
 // =======================================================================
-// ZONA ADMIN / KASIR PARTLYFE
+// ZONA ADMIN / KASIR PARTLYFE (SUDAH DISATUKAN & DIRESET BERSIH)
 // =======================================================================
-<<<<<<< HEAD
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin/dashboard-pos', function () {
-        return '<h1>Selamat Datang di Dashboard Admin & POS Partlyfe!</h1>';
-    });
-=======
-Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Dashboard Utama Admin
-    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     
-    // Manajemen Produk & Stok
-    Route::get('/products', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('products.index');
+    // 👑 1. KRUSIAL: Rute POST AJAX Transaksi ditaruh di paling atas agar tidak tertimpa wildcard
+    Route::post('/transactions/update-status', [TransactionController::class, 'updateStatus'])->name('admin.transactions.updateStatus');
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('admin.transactions.index');
+    Route::get('/transactions/{id}', [TransactionController::class, 'show'])->name('admin.transactions.show');
+
+    // 📊 2. Dashboard Utama Admin & Data Pelanggan
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/customers', [DashboardController::class, 'customers'])->name('admin.customers.index');
+    Route::get('/customers/{id}', [DashboardController::class, 'showCustomer'])->name('admin.customers.show');
+    Route::post('/customers/{id}/upgrade', [DashboardController::class, 'upgradeToB2b'])->name('admin.customers.upgrade');
     
-    // Riwayat Transaksi
-    Route::get('/transactions', [\App\Http\Controllers\Admin\TransactionController::class, 'index'])->name('transactions.index');
-    
-    // Manajemen Data Pelanggan
-    Route::get('/customers', [\App\Http\Controllers\Admin\DashboardController::class, 'customers'])->name('customers.index');
-    
-    // DETAIL TRANSAKSI & AKSI UPGRADE B2B PELANGGAN (Tambahan Baru)
-    Route::get('/customers/{id}', [\App\Http\Controllers\Admin\DashboardController::class, 'showCustomer'])->name('customers.show');
-    Route::post('/customers/{id}/upgrade', [\App\Http\Controllers\Admin\DashboardController::class, 'upgradeToB2b'])->name('customers.upgrade');
-    
-    // Kirim Broadcast Promo
-    Route::get('/broadcast', [\App\Http\Controllers\Admin\BroadcastController::class, 'index'])->name('broadcast.index');
-    Route::post('/broadcast', [\App\Http\Controllers\Admin\BroadcastController::class, 'store'])->name('broadcast.store');
->>>>>>> c8d47de4e29a6d6e906a2a0c9be803382d6b537d
+    // 📣 3. Kirim Broadcast Promo (Hanya Satu Pasang Rute Resmi)
+    Route::get('/broadcast', [BroadcastController::class, 'index'])->name('admin.broadcast.index');
+    Route::post('/broadcast', [BroadcastController::class, 'store'])->name('admin.broadcast.store');
+
+    // 📦 4. Resource CRUD Produk Admin Otomatis
+    Route::resource('products', ProductController::class)->names('admin.products');
 });
 
 
@@ -103,8 +95,8 @@ Route::middleware(['auth', 'role:b2c'])->group(function () {
     
     // Aksi Keranjang & Wishlist
     Route::post('/cart/add/{id}', [CustomerController::class, 'addToCart'])->name('cart.add');
-    Route::patch('/cart/update/{id}', [CustomerController::class, 'updateCart'])->name('cart.update'); // Update Qty
-    Route::delete('/cart/remove/{id}', [CustomerController::class, 'removeFromCart'])->name('cart.remove'); // Hapus Item
+    Route::patch('/cart/update/{id}', [CustomerController::class, 'updateCart'])->name('cart.update'); 
+    Route::delete('/cart/remove/{id}', [CustomerController::class, 'removeFromCart'])->name('cart.remove'); 
     Route::post('/wishlist/toggle/{id}', [CustomerController::class, 'toggleWishlist'])->name('wishlist.toggle');
     
     // Rute Transaksi & Kabar Admin
@@ -130,37 +122,10 @@ Route::middleware(['auth', 'role:b2c'])->group(function () {
     Route::put('/customer/profile/address', [ProfileController::class, 'updateAddress'])->name('profile.update.address');
     Route::post('/customer/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.update.avatar');
     Route::put('/customer/profile/security', [ProfileController::class, 'updateSecurity'])->name('profile.update.security');
-
 });
 
+// Rute untuk Live Search berbasis AI Publik
+Route::get('/api/search-ai', [CustomerController::class, 'aiSearch'])->name('api.search.ai');
 
-// =======================================================================
-// KELOMPOK ROUTE KHUSUS ADMIN
-// =======================================================================
-Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
-    
-    // Dashboard & Customers
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-    Route::get('/customers', [DashboardController::class, 'customers'])->name('admin.customers.index');
-    Route::get('/customers/{id}', [DashboardController::class, 'showCustomer'])->name('admin.customers.show');
-    Route::post('/customers/{id}/upgrade', [DashboardController::class, 'upgradeToB2b'])->name('admin.customers.upgrade');
-
-    // Transaksi / Pesanan
-    Route::get('/transactions', [TransactionController::class, 'index'])->name('admin.transactions.index');
-
-    // Broadcast Promosi
-    Route::get('/broadcast', [BroadcastController::class, 'index'])->name('admin.broadcast.index'); 
-    Route::post('/broadcast', [BroadcastController::class, 'store'])->name('admin.broadcast.store');
-
-    // 🚀 ROUTE BINDING CRUD PRODUK ADMIN BARU
-    // Diberi penamaan otomatis agar menghasilkan rute 'admin.products.index' dengan benar
-    Route::resource('products', App\Http\Controllers\Admin\ProductController::class)->names('admin.products');
-});
-
-// Rute untuk Live Search berbasis AI
-Route::get('/api/search-ai', [App\Http\Controllers\CustomerController::class, 'aiSearch'])->name('api.search.ai');
-
-// Pastikan baris ini ada di dalam kelompok/group rute admin kamu:
-Route::post('/admin/broadcast', [App\Http\Controllers\Admin\BroadcastController::class, 'store'])->name('admin.broadcast.store');
-
+// Sertakan rute otentikasi bawaan Breeze
 require __DIR__.'/auth.php';

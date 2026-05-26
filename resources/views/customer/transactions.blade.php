@@ -9,7 +9,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    {{-- 🚀 WAJIB: Script SDK Midtrans Snap --}}
+    {{-- 🚀 WAJIB: Script SDK Midtrans Snap Sandbox --}}
     <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
     <style>
@@ -55,7 +55,7 @@
 
     <div class="flex-1 flex flex-col h-screen overflow-hidden relative z-10">
 
-        {{-- Header Khusus Halaman Transaksi --}}
+        {{-- Header Halaman --}}
         <header class="h-20 glass-header flex items-center justify-between px-8 flex-shrink-0 z-50 sticky top-0">
             <h1 class="text-xl font-black text-slate-800 tracking-tight">Riwayat Transaksi Saya</h1>
             <div class="flex items-center gap-6">
@@ -92,17 +92,13 @@
                 <div class="space-y-6">
                     @forelse($transactions as $trx)
                         @php
-                            // Perhitungan total harga dinamis otomatis biar tidak Rp 0
-                            $totalTagihan = 0;
-                            if (!empty($trx->gross_amount) && $trx->gross_amount > 0) {
-                                $totalTagihan = $trx->gross_amount;
-                            } elseif (!empty($trx->total_price) && $trx->total_price > 0) {
-                                $totalTagihan = $trx->total_price;
-                            } else {
+                            $totalTagihan = $trx->total_amount ?? $trx->gross_amount ?? $trx->total_price ?? 0;
+                            if ($totalTagihan <= 0) {
                                 foreach($trx->details ?? [] as $detail) {
                                     $totalTagihan += ($detail->qty * ($detail->price ?? 0));
                                 }
                             }
+                            $dbStatus = strtolower(trim($trx->status ?? 'pending'));
                         @endphp
 
                         <div class="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden hover:border-amber-200 transition-colors">
@@ -119,16 +115,24 @@
                                     </div>
                                 </div>
                                 
-                                {{-- Badge Status --}}
+                                {{-- BADGE STATUS CUSTOMER (SINKRONISASI ENUM SAKTI) --}}
                                 <div>
-                                    @if(in_array(strtolower($trx->status), ['pending', 'unpaid', 'menunggu']))
-                                        <span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-amber-200"><i class="fa-regular fa-clock mr-1"></i> Menunggu Bayar</span>
-                                    @elseif(in_array(strtolower($trx->status), ['processing', 'diproses']))
-                                        <span class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-blue-200"><i class="fa-solid fa-box-open mr-1"></i> Diproses</span>
-                                    @elseif(in_array(strtolower($trx->status), ['success', 'selesai', 'settlement']))
-                                        <span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-emerald-200"><i class="fa-solid fa-check mr-1"></i> Selesai</span>
+                                    @if(in_array($dbStatus, ['pending', 'unpaid', 'menunggu pembayaran']))
+                                        <span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-amber-200">
+                                            <i class="fa-regular fa-clock mr-1"></i> Menunggu Bayar
+                                        </span>
+                                    @elseif(in_array($dbStatus, ['processing', 'diproses', 'sedang diproses']))
+                                        <span class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-blue-200">
+                                            <i class="fa-solid fa-box-open mr-1"></i> Sedang Diproses
+                                        </span>
+                                    @elseif(in_array($dbStatus, ['success', 'selesai', 'settlement', 'paid']))
+                                        <span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-emerald-200">
+                                            <i class="fa-solid fa-check mr-1"></i> Selesai
+                                        </span>
                                     @else
-                                        <span class="bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-rose-200"><i class="fa-solid fa-xmark mr-1"></i> Gagal/Batal</span>
+                                        <span class="bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-rose-200">
+                                            <i class="fa-solid fa-xmark mr-1"></i> Dibatalkan
+                                        </span>
                                     @endif
                                 </div>
                             </div>
@@ -155,21 +159,18 @@
                                 @endforeach
                             </div>
 
-                            {{-- Footer Card Transaksi (Total & Tombol Aksi) --}}
+                            {{-- Footer Card Transaksi --}}
                             <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
                                 <div>
                                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Tagihan</p>
                                     <p class="text-lg font-black text-amber-600">Rp {{ number_format($totalTagihan, 0, ',', '.') }}</p>
                                 </div>
                                 <div class="flex gap-3 items-center">
-                                    
-                                    {{-- 🚀 TOMBOL LIHAT NOTA / INVOICE ASLI YANG KETINGGALAN --}}
                                     <a href="{{ route('customer.invoice', $trx->invoice_number ?? 'INV-'.$trx->id) }}" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm flex items-center gap-2">
                                         <i class="fa-solid fa-file-invoice text-slate-400"></i> Lihat Nota
                                     </a>
 
-                                    {{-- Hanya muncul jika status pending --}}
-                                    @if(in_array(strtolower($trx->status), ['pending', 'unpaid', 'menunggu']) && !empty($trx->snap_token))
+                                    @if(in_array($dbStatus, ['pending', 'unpaid', 'menunggu', 'menunggu pembayaran']) && !empty($trx->snap_token))
                                         <button onclick="payTransaction('{{ $trx->snap_token }}')" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-sm">
                                             <i class="fa-solid fa-wallet mr-2"></i> Bayar Sekarang
                                         </button>
@@ -200,7 +201,7 @@
         </main>
     </div>
 
-    {{-- SCRIPT MIDTRANS (MANUAL PAY ONLY) --}}
+    {{-- SCRIPT MIDTRANS SDK SNAP --}}
     <script>
         function payTransaction(snapToken) {
             window.snap.pay(snapToken, {
