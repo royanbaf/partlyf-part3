@@ -87,7 +87,7 @@ class CustomerController extends Controller
         return view('customer.cart', compact('cartItems'));
     }
 
-    public function addToCart(Request $request, $product_id)
+   public function addToCart(Request $request, $product_id)
     {
         $product = Product::find($product_id);
         
@@ -95,19 +95,16 @@ class CustomerController extends Controller
             return back()->with('error', 'Produk tidak ditemukan.');
         }
 
-        $requestedQty = $request->input('qty', 1);
+        $requestedQty = $request->input('qt y', 1);
 
-        // GEMBOK KETAT 1: Cek stok asli produk
         if ($product->current_stock <= 0) {
             return back()->with('error', "Maaf bos, stok {$product->name} sedang habis total! Tidak bisa dimasukkan ke keranjang.");
         }
 
-        // Cek apakah barang sudah ada di keranjang user
         $cartItem = Cart::where('user_id', Auth::id())
                         ->where('product_id', $product_id)
                         ->first();
 
-        // Jika sudah ada di keranjang, cek apakah total tambahannya melebihi sisa stok
         $existingQty = $cartItem ? $cartItem->qty : 0;
         $newTotalQty = $existingQty + $requestedQty;
 
@@ -115,7 +112,6 @@ class CustomerController extends Controller
             return back()->with('error', "Stok {$product->name} terbatas. Anda sudah punya {$existingQty} di keranjang, dan sisa stok hanya {$product->current_stock} pcs.");
         }
 
-        // Jika semua lolos, simpan ke keranjang
         if ($cartItem) {
             $cartItem->qty += $requestedQty;
             $cartItem->save();
@@ -130,10 +126,66 @@ class CustomerController extends Controller
         return back()->with('success', 'Berhasil ditambahkan ke keranjang Partlyfe!');
     }
 
-    public function removeFromCart($id)
+    public function updateCart(Request $request, $id)
     {
+        $cartItem = Cart::where('user_id', Auth::id())->where('id', $id)->first();
+        
+        if (!$cartItem) {
+            return response()->json(['status' => 'error', 'message' => 'Item keranjang tidak ditemukan.'], 404);
+        }
+
+        $product = Product::find($cartItem->product_id);
+        $newQty = $request->input('qty');
+
+        // Gembok Keamanan Gudang: Jangan sampai kuantitas keranjang melebihi stok fisik asli
+        if ($newQty > $product->current_stock) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Stok terbatas bos! Sisa stok fisik di gudang hanya {$product->current_stock} pcs."
+            ], 400);
+        }
+
+        // Simpan kuantitas baru ke database SQL
+        $cartItem->qty = $newQty;
+        $cartItem->save();
+
+        // Hitung ulang akumulasi subtotal harga barang pasca mutasi data
+        $retailPrice = $product->prices->where('price_level', 1)->first()->price ?? 0;
+        $itemSubtotal = $retailPrice * $newQty;
+
+        // Hitung total seluruh belanjaan di dalam keranjang user sekarang
+        $allCartItems = Cart::where('user_id', Auth::id())->get();
+        $totalCartPrice = 0;
+        foreach ($allCartItems as $item) {
+            $priceRow = $item->product->prices->where('price_level', 1)->first()->price ?? 0;
+            $totalCartPrice += ($priceRow * $item->qty);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'itemSubtotal' => $itemSubtotal,
+            'totalCartPrice' => $totalCartPrice
+        ]);
+    }
+
+   public function removeFromCart($id)
+    {
+        // 1. Hapus baris data dari tabel carts di database
         Cart::where('user_id', Auth::id())->where('id', $id)->delete();
-        return back()->with('success', 'Barang berhasil dibuang dari keranjang.');
+
+        // 2. Hitung total belanjaan baru setelah data sukses dibuang dari database
+        $allCartItems = Cart::where('user_id', Auth::id())->get();
+        $totalCartPrice = 0;
+        foreach ($allCartItems as $item) {
+            $priceRow = $item->product->prices->where('price_level', 1)->first()->price ?? 0;
+            $totalCartPrice += ($priceRow * $item->qty);
+        }
+
+        // 3. Kembalikan data bertipe data JSON agar dibaca lancar oleh script AJAX
+        return response()->json([
+            'status' => 'success',
+            'totalCartPrice' => $totalCartPrice
+        ]);
     }
 
     // ==========================================================
@@ -195,7 +247,7 @@ class CustomerController extends Controller
             
         return view('customer.transactions', compact('transactions', 'statusFilter'));
     }
-    
+
     // ==========================================================
     // 5. AREA KABAR ADMIN (BROADCAST) - VERSI SINKRON 100%
     // ==========================================================

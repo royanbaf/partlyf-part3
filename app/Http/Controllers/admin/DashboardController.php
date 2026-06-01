@@ -67,4 +67,28 @@ class DashboardController extends Controller
         $customers = DB::table('users')->where('role', 'b2c')->latest()->get();
         return view('admin.customers', compact('customers'));
     }
+
+    // 🚀 FIX MUTLAK SAKTI: Mengembalikan UI dan Menghubungkan Data Transaksi Asli
+    // 🚀 FIX MUTLAK: Mengunci Query ke transactions.customer_id sesuai DB Kelompok
+    // 🚀 FIX MUTLAK FINAL: Menembak langsung kolom user_id sesuai dump radar database kelompok
+    public function showCustomer($id)
+    {
+        // 1. Ambil data profil pelanggan berdasarkan ID yang diklik
+        $customer = DB::table('users')
+            ->where('id', $id)
+            ->first();
+
+        if (!$customer) {
+            abort(404, 'Pelanggan tidak ditemukan.');
+        }
+
+        // 2. Tarik riwayat transaksi murni dari tabel transactions kelompokmu menggunakan user_id
+        $customerTransactions = DB::table('transactions')
+            ->where('user_id', $id) // ✨ Sesuai dump array index ke-2 kelompokmu
+            ->latest('created_at')
+            ->get();
+
+        // 3. Lempar datanya dengan aman ke file blade khusus detail pelanggan
+        return view('admin.customer_detail', compact('customer', 'customerTransactions'));
+    }
 }

@@ -141,37 +141,89 @@
             </div>
         </main>
     </div>
-
     <script>
-        // Logika update kuantitas Ajax / Frontend
+        // 🚀 FIX AJAX: Update Kuantitas Langsung Mutasi ke Database SQL
         function updateCartQty(itemId, change) {
             const qtyDisplay = document.getElementById('display-qty-' + itemId);
             let currentQty = parseInt(qtyDisplay.innerText);
             let newQty = currentQty + change;
+            
             if (newQty < 1) return;
 
-            qtyDisplay.innerText = newQty;
-            // Di sini kamu bisa menyuntikkan fungsi Fetch/Axios API untuk meng-update record qty di database kamu!
+            // Kirim request update ke Laravel via AJAX Patch
+            fetch(`/cart/update/${itemId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ qty: newQty })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update angka kuantitas di layar
+                    qtyDisplay.innerText = newQty;
+                    
+                    // Update text subtotal per barang
+                    document.getElementById('item-subtotal-' + itemId).innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.itemSubtotal);
+                    
+                    // Update text grand total keranjang belanja di sebelah kanan
+                    document.getElementById('cart-total-text').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.totalCartPrice);
+                } else {
+                    alert(data.message || 'Gagal mengubah kuantitas.');
+                    // Kembalikan angka jika stok di gudang tidak cukup
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan koneksi sistem.');
+            });
         }
 
+        // 🚀 FIX AJAX: Sekali klik hapus, langsung lenyap selamanya dari database SQL
         function deleteCartItem(itemId) {
-            if(confirm('Hapus item ini dari keranjang?')) {
-                document.getElementById('cart-item-' + itemId).remove();
-                // Di sini masukkan request API delete item keranjang kamu
+            if(confirm('Apakah Anda yakin ingin membuang item suku cadang ini dari keranjang?')) {
+                
+                fetch(`/cart/remove/${itemId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Hapus element card dari layar HTML
+                        document.getElementById('cart-item-' + itemId).remove();
+                        
+                        // Update total belanjaan baru di box kanan
+                        document.getElementById('cart-total-text').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.totalCartPrice);
+                        
+                        // Jika keranjang sudah kosong melompong, refresh halaman agar memunculkan empty state
+                        if (data.totalCartPrice === 0) {
+                            window.location.reload();
+                        }
+                    } else {
+                        alert('Gagal menghapus barang dari keranjang.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan sistem saat menghapus data.');
+                });
             }
         }
 
-       // ==========================================
-        // MENGARAHKAN KE HALAMAN RINGKASAN CHECKOUT
-        // ==========================================
+        // Mengarahkan ke halaman ringkasan checkout pembayaran
         const btnCheckoutCart = document.getElementById('btn-checkout-cart');
         if (btnCheckoutCart) {
             btnCheckoutCart.addEventListener('click', function() {
-                const originalHTML = this.innerHTML;
                 this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memuat Ringkasan...';
                 this.disabled = true;
-                
-                // Lempar ke halaman Ringkasan Belanja
                 window.location.href = "{{ route('customer.checkout') }}";
             });
         }

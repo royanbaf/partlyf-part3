@@ -21,9 +21,17 @@
         <i class="fa-solid fa-receipt"></i> Transaksi
     </a>
 
-    <a href="{{ route('admin.customers.index') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl {{ Request::is('admin/customers') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:bg-white/5' }} transition-all font-bold">
-        <i class="fa-solid fa-users"></i> Pelanggan
-    </a>
+    <a href="{{ url('/admin/customers') }}" 
+   class="flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all duration-300 group
+   {{ Request::is('admin/customers*') 
+      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
+      : 'text-slate-400 hover:bg-white/[0.03] hover:text-slate-200' }}">
+    
+    <i class="fa-solid fa-users text-sm transition-colors w-5 text-center
+       {{ Request::is('admin/customers*') ? 'text-white' : 'text-slate-500 group-hover:text-slate-300' }}">
+    </i>
+    <span class="text-sm tracking-wide">Pelanggan</span>
+</a>
 
     <a href="{{ route('admin.broadcast.index') }}" class="flex items-center gap-4 px-4 py-3 rounded-xl {{ Request::is('admin/broadcast') ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:bg-white/5' }} transition-all font-bold">
         <i class="fa-solid fa-tower-broadcast"></i> Broadcast Promo

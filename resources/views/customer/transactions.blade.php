@@ -115,7 +115,7 @@
                                     </div>
                                 </div>
                                 
-                                {{-- BADGE STATUS CUSTOMER (SINKRONISASI ENUM SAKTI) --}}
+                                {{-- BADGE STATUS CUSTOMER --}}
                                 <div>
                                     @if(in_array($dbStatus, ['pending', 'unpaid', 'menunggu pembayaran']))
                                         <span class="bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-amber-200">
@@ -141,9 +141,13 @@
                             <div class="p-6">
                                 @foreach($trx->details ?? [] as $detail)
                                     <div class="flex items-center gap-4 mb-4 pb-4 border-b border-slate-50 last:mb-0 last:pb-0 last:border-0">
+                                        {{-- 🚀 KUNCI FIX: Memanggil Jalur Foto Asli Database Kelompok --}}
                                         <div class="w-16 h-16 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                            @if($detail->product && $detail->product->images && $detail->product->images->isNotEmpty())
-                                                <img src="{{ asset('storage/products/' . basename($detail->product->images->first()->image_path)) }}" class="max-w-full max-h-full object-contain p-1">
+                                            @php
+                                                $trxPathFoto = DB::table('product_images')->where('product_id', $detail->product_id)->value('image_path');
+                                            @endphp
+                                            @if($trxPathFoto)
+                                                <img src="{{ asset('storage/' . $trxPathFoto) }}" class="max-w-full max-h-full object-contain p-1">
                                             @else
                                                 <i class="fa-solid fa-box text-slate-300 text-xl"></i>
                                             @endif
@@ -201,7 +205,6 @@
         </main>
     </div>
 
-    {{-- SCRIPT MIDTRANS SDK SNAP --}}
     <script>
         function payTransaction(snapToken) {
             window.snap.pay(snapToken, {

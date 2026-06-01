@@ -35,19 +35,18 @@
 </head>
 <body class="antialiased selection:bg-[#c5a880] selection:text-white">
 
+    {{-- STICKY PREMIUM HEADER NAVIGATION --}}
     <header class="w-full bg-white/80 backdrop-blur sticky top-0 z-50 border-b border-gray-100">
         <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+            {{-- LOGO KIRI --}}
             <a href="/" class="text-base font-bold tracking-[0.3em] text-gray-900 uppercase">
                 PART<span class="text-gold">LYFE</span>
             </a>
             
-            <nav class="hidden md:flex items-center gap-10 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400">
-                <a href="#" class="text-gray-900 border-b border-gray-900 pb-1">Katalog Produk</a>
-                <a href="#" class="hover:text-gray-900 transition">Manajemen Stok</a>
-                <a href="#" class="hover:text-gray-900 transition">Rekomendasi Pintar</a>
-                <a href="#" class="hover:text-gray-900 transition">Kemitraan B2B</a>
-            </nav>
+            {{-- BAGIAN TENGAH BERSIH TOTAL TANPA MENU TEKS --}}
+            <div class="flex-1"></div>
 
+            {{-- TOMBOL NAVIGASI KANAN SIGN IN & REGISTER --}}
             <div class="flex items-center gap-6">
                 <a href="{{ route('login') }}" class="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 hover:text-gray-900 transition">Sign In</a>
                 <a href="{{ route('register') }}" class="text-[11px] font-semibold uppercase tracking-[0.2em] text-white bg-gray-900 hover:bg-[#c5a880] px-6 py-3 transition duration-300">
@@ -57,6 +56,7 @@
         </div>
     </header>
 
+    {{-- HERO SECTION GRID FEATURED --}}
     <section class="max-w-6xl mx-auto px-6 pt-20 pb-28 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
         <div class="lg:col-span-5 space-y-6">
             <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-gold block">
@@ -77,7 +77,7 @@
         </div>
 
         <div class="lg:col-span-7 grid grid-cols-12 gap-4 h-[400px] sm:h-[480px]">
-            <div class="col-span-8 bg-white border border-gray-200 p-8 flex flex-col justify-between relative group cursor-pointer">
+            <div class="col-span-8 bg-white border border-gray-200 p-8 flex flex-col justify-between relative group cursor-pointer rounded-xl">
                 <span class="text-[10px] text-gray-300 font-medium tracking-widest">COLLECTION 2026</span>
                 <div class="w-full flex justify-center py-8 text-gray-200 group-hover:text-gold transition-colors duration-500">
                     <i class="fa-solid fa-gear text-7xl opacity-40"></i>
@@ -89,11 +89,11 @@
             </div>
             
             <div class="col-span-4 flex flex-col gap-4 h-full">
-                <div class="h-1/2 bg-white border border-gray-200 p-6 flex flex-col justify-between hover:border-gold transition-colors">
+                <div class="h-1/2 bg-white border border-gray-200 p-6 flex flex-col justify-between hover:border-gold transition-colors rounded-xl">
                     <i class="fa-solid fa-circle-nodes text-2xl text-gray-300"></i>
                     <h4 class="font-bold text-xs text-gray-900 uppercase tracking-wider">Sistem CVT</h4>
                 </div>
-                <div class="h-1/2 bg-white border border-gray-200 p-6 flex flex-col justify-between hover:border-gold transition-colors">
+                <div class="h-1/2 bg-white border border-gray-200 p-6 flex flex-col justify-between hover:border-gold transition-colors rounded-xl">
                     <i class="fa-solid fa-droplet text-2xl text-gray-300"></i>
                     <h4 class="font-bold text-xs text-gray-900 uppercase tracking-wider">Cairan Fluida</h4>
                 </div>
@@ -101,22 +101,18 @@
         </div>
     </section>
 
+    {{-- CATEGORIES ETALASE SECTION (SERIES SUDAH DIHAPUS TOTAL) --}}
     <section class="max-w-6xl mx-auto px-6 py-20 border-t border-gray-200">
         <div class="flex flex-col sm:flex-row sm:items-baseline justify-between mb-16 gap-4">
             <div>
                 <h2 class="text-xl font-bold uppercase tracking-wider text-gray-900">Kategori Pilihan</h2>
                 <p class="text-xs text-gray-400 mt-1">Suku cadang yang dikelompokkan berdasarkan fungsionalitas sistem motor.</p>
             </div>
-            <div class="flex gap-8 text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
-                <span class="text-gray-900 border-b border-gray-900 pb-2 cursor-pointer">Honda Series</span>
-                <span class="hover:text-gray-900 cursor-pointer transition">Yamaha Series</span>
-                <span class="hover:text-gray-900 cursor-pointer transition">Suzuki Series</span>
-            </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             <div class="space-y-4 cursor-pointer group">
-                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative">
+                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative rounded-xl">
                     <i class="fa-solid fa-circle-notch text-4xl opacity-40 group-hover:text-gold transition-colors"></i>
                 </div>
                 <div>
@@ -125,7 +121,7 @@
                 </div>
             </div>
             <div class="space-y-4 cursor-pointer group">
-                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative">
+                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative rounded-xl">
                     <i class="fa-solid fa-cubes text-4xl opacity-40 group-hover:text-gold transition-colors"></i>
                 </div>
                 <div>
@@ -134,7 +130,7 @@
                 </div>
             </div>
             <div class="space-y-4 cursor-pointer group">
-                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative">
+                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative rounded-xl">
                     <i class="fa-solid fa-bolt-lightning text-4xl opacity-40 group-hover:text-gold transition-colors"></i>
                 </div>
                 <div>
@@ -143,7 +139,7 @@
                 </div>
             </div>
             <div class="space-y-4 cursor-pointer group">
-                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative">
+                <div class="h-72 bg-white border border-gray-200 flex items-center justify-center text-gray-200 group-hover:border-gold transition duration-300 relative rounded-xl">
                     <i class="fa-solid fa-shield text-4xl opacity-40 group-hover:text-gold transition-colors"></i>
                 </div>
                 <div>
@@ -154,6 +150,7 @@
         </div>
     </section>
 
+    {{-- VALUE PROPOSITION SECTION --}}
     <section class="max-w-6xl mx-auto px-6 py-20 border-t border-gray-200 mb-12">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-sm">
             <div class="space-y-3">
@@ -180,6 +177,7 @@
         </div>
     </section>
 
+    {{-- FOOTER BAWAAN ASLI --}}
     <footer class="bg-[#121212] text-gray-400 py-16 px-6">
         <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 text-xs border-b border-gray-800 pb-12">
             <div class="space-y-3">
