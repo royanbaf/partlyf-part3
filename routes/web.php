@@ -11,7 +11,7 @@ use App\Http\Controllers\Admin\TransactionController;
 use App\Http\Controllers\Admin\BroadcastController;
 
 // =======================================================================
-// ZONA SHOWCASE UI (Landing Page)
+// ZONA SHOWCASE UI (Landing Page Publik)
 // =======================================================================
 Route::get('/', function () {
     // Ambil 5 kategori teratas untuk etalase
@@ -23,9 +23,6 @@ Route::get('/', function () {
     return view('shop.index', compact('categories', 'products'));
 });
 
-Route::get('/pos', function () {
-    return view('admin.pos');
-});
 
 // =======================================================================
 // ZONA KATALOG PUBLIK (BISA DILIHAT TANPA LOGIN)
@@ -60,26 +57,31 @@ Route::middleware('auth')->group(function () {
 
 
 // =======================================================================
-// ZONA ADMIN / KASIR PARTLYFE (SUDAH DISATUKAN & DIRESET BERSIH)
+// ZONA ADMIN / KASIR PARTLYFE (PENGAMAN FILTER DI BAWAH PREFIX /ADMIN)
 // =======================================================================
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     
-    // 👑 1. KRUSIAL: Rute POST AJAX Transaksi ditaruh di paling atas agar tidak tertimpa wildcard
+    // 🏪 1. SINKRONISASI POS: Halaman fisik POS Kasir diamankan di sini agar klop dengan link /admin/pos
+    Route::get('/pos', function() {
+        return view('admin.pos');
+    })->name('admin.pos.page');
+
+    // 💰 2. Rute POST AJAX Transaksi ditaruh di paling atas agar tidak tertimpa wildcard
     Route::post('/transactions/update-status', [TransactionController::class, 'updateStatus'])->name('admin.transactions.updateStatus');
     Route::get('/transactions', [TransactionController::class, 'index'])->name('admin.transactions.index');
     Route::get('/transactions/{id}', [TransactionController::class, 'show'])->name('admin.transactions.show');
 
-    // 📊 2. Dashboard Utama Admin & Data Pelanggan
+    // 📊 3. Dashboard Utama Admin & Data Pelanggan
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/customers', [DashboardController::class, 'customers'])->name('admin.customers.index');
     Route::get('/customers/{id}', [DashboardController::class, 'showCustomer'])->name('admin.customers.show');
     Route::post('/customers/{id}/upgrade', [DashboardController::class, 'upgradeToB2b'])->name('admin.customers.upgrade');
     
-    // 📣 3. Kirim Broadcast Promo (Hanya Satu Pasang Rute Resmi)
+    // 📣 4. Kirim Broadcast Promo (Hanya Satu Pasang Rute Resmi)
     Route::get('/broadcast', [BroadcastController::class, 'index'])->name('admin.broadcast.index');
     Route::post('/broadcast', [BroadcastController::class, 'store'])->name('admin.broadcast.store');
 
-    // 📦 4. Resource CRUD Produk Admin Otomatis
+    // 📦 5. Resource CRUD Produk Admin Otomatis
     Route::resource('products', ProductController::class)->names('admin.products');
 });
 
@@ -126,6 +128,13 @@ Route::middleware(['auth', 'role:b2c'])->group(function () {
 
 // Rute untuk Live Search berbasis AI Publik
 Route::get('/api/search-ai', [CustomerController::class, 'aiSearch'])->name('api.search.ai');
+
+// 📦 Resource CRUD Produk Admin Otomatis
+    Route::resource('products', ProductController::class)->names('admin.products');
+
+    // 🏪 TAMBAHAN RUTE BARU KHUSUS INTEGRASI MIDtrans & POTONG STOK DI KASIR POS
+    Route::post('/pos/initiate', [TransactionController::class, 'initiatePosPayment'])->name('admin.pos.initiate');
+    Route::post('/pos/complete', [TransactionController::class, 'completePosPayment'])->name('admin.pos.complete');
 
 // Sertakan rute otentikasi bawaan Breeze
 require __DIR__.'/auth.php';

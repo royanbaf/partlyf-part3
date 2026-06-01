@@ -16,6 +16,33 @@ class ProductController extends Controller
         return view('admin.products', compact('products'));
     }
 
+    // =======================================================================
+    // 🎯 FIX FUNCTION: Alihkan Tampilan ke Halaman Utama dengan Pemicu Modal
+    // =======================================================================
+    public function edit($id)
+    {
+        // 1. Ambil data produk menggunakan Query Builder murni kelompokmu
+        $product = DB::table('products')->where('id', $id)->first();
+        
+        if (!$product) {
+            abort(404, 'Suku cadang tidak ditemukan di database.');
+        }
+
+        // 2. Tarik harga level 1 (Retail) suku cadang ini
+        $priceRow = DB::table('product_prices')
+            ->where('product_id', $id)
+            ->where('price_level', 1)
+            ->first();
+
+        $product->price = $priceRow ? $priceRow->price : 0;
+
+        // 3. Ambil semua data produk untuk merender tabel utamanya
+        $products = DB::table('products')->latest('id')->get();
+
+        // 4. JURUS KUNCI: Buka file products.blade.php bawaan kelompokmu
+        // dan kirim variabel 'open_edit_modal' berisi data produk target
+        return view('admin.products', compact('products', 'product'))->with('open_edit_modal', $id);
+    }
     // 2. CREATE: Simpan produk baru + Unggah Foto sesuai kolom database phpMyAdmin
     public function store(Request $request)
     {
@@ -73,7 +100,7 @@ class ProductController extends Controller
         }
     }
 
-    // 3. UPDATE: Perbarui data produk via Modal Button
+    // 3. UPDATE: Perbarui data produk via Modal Button / Form Edit Restock
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -130,7 +157,9 @@ class ProductController extends Controller
             }
 
             DB::commit();
-            return redirect()->back()->with('success', 'Data produk berhasil diperbarui!');
+            
+            // 🚀 ALKAN ALUR: Lempar balik ke dashboard utama admin agar perubahan langsung terpantau live
+            return redirect()->route('admin.dashboard')->with('success', 'Data stok suku cadang berhasil diperbarui di database!');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal memperbarui data produk.');

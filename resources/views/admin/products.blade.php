@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Manajemen Produk | Partlyfe Admin</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -10,6 +11,8 @@
         body { background-color: #020617; color: white; }
         .glass-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); }
         .table-header { background: rgba(15, 23, 42, 0.9); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="font-sans flex h-screen overflow-hidden text-slate-200">
@@ -38,12 +41,13 @@
         </header>
 
         {{-- Main Container Content --}}
-        <main class="flex-1 overflow-y-auto p-10 relative z-10">
+        <main class="flex-1 overflow-y-auto p-10 relative z-10 scrollbar-hide">
             
+            {{-- Bagian Atas Judul & Tombol Tambah --}}
             <div class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h3 class="text-lg font-black text-white uppercase tracking-wider">Daftar Suku Cadang</h3>
-                    <p class="text-xs text-slate-500">Total {{ count($products ?? []) }} SKU terdaftar aktif di database.</p>
+                    <p class="text-xs text-slate-500">Total {{ count($products ?? []) }} SKU terdaftar aktif di database Partlyfe.</p>
                 </div>
                 <button onclick="toggleModal('addProductModal')" 
                     class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider px-6 py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition flex items-center gap-2">
@@ -73,10 +77,10 @@
                         <thead>
                             <tr class="table-header text-[10px] uppercase tracking-widest text-slate-500 border-b border-white/5">
                                 <th class="px-6 py-5 font-bold">Visual</th>
-                                <th class="px-6 py-5 font-bold">Informasi Produk</th>
-                                <th class="px-6 py-5 font-bold">Stok</th>
-                                <th class="px-6 py-5 font-bold">Harga Satuan</th>
-                                <th class="px-6 py-5 font-bold text-center">Aksi</th>
+                                <th class="px-6 py-5 font-bold">Informasi Suku Cadang</th>
+                                <th class="px-6 py-5 font-bold">Stok Gudang</th>
+                                <th class="px-6 py-5 font-bold">Harga Retail Level 1</th>
+                                <th class="px-6 py-5 font-bold text-center">Aksi CRUD</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/5 text-sm">
@@ -96,38 +100,46 @@
                                             </div>
                                         @endif
                                     </td>
+                                    
+                                    {{-- Kolom Info Nama & Brand --}}
                                     <td class="px-6 py-5">
                                         <p class="text-sm font-bold text-white">{{ $p->name }}</p>
-                                        <p class="text-[10px] text-slate-500 italic uppercase tracking-wider mt-0.5">
+                                        <p class="text-[10px] text-slate-500 italic uppercase tracking-wider mt-0.5 font-mono">
                                             SKU: {{ $p->item_code }} | Merek: {{ $p->brand }}
                                         </p>
                                     </td>
+                                    
+                                    {{-- Kolom Indikator Stok Kritis --}}
                                     <td class="px-6 py-5">
                                         @if($p->current_stock <= 0)
-                                            <span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wide">Habis</span>
-                                        @elseif($p->current_stock <= 3)
-                                            <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wide">Sisa {{ $p->current_stock }}</span>
+                                            <span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wide">Ludes</span>
+                                        @elseif($p->current_stock <= 5)
+                                            <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wide">Kritis ({{ $p->current_stock }})</span>
                                         @else
-                                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wide">{{ $p->current_stock }} Pcs</span>
+                                            <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wide font-mono">{{ $p->current_stock }} Pcs</span>
                                         @endif
                                     </td>
+                                    
+                                    {{-- Kolom Harga --}}
                                     <td class="px-6 py-5 font-mono font-black text-white">
                                         Rp {{ number_format($hargaRetail, 0, ',', '.') }}
                                     </td>
+                                    
+                                    {{-- Kolom Aksi Kontrol --}}
                                     <td class="px-6 py-5 text-center">
                                         <div class="flex items-center justify-center gap-4">
-                                            {{-- Tombol Edit Berbentuk Button Interaktif --}}
+                                            {{-- Tombol Edit Data Suku Cadang --}}
                                             <button type="button" 
                                                 onclick="openEditModal('{{ $p->id }}', '{{ addslashes($p->name) }}', '{{ addslashes($p->brand) }}', '{{ addslashes($p->item_code) }}', '{{ $p->current_stock }}', '{{ $hargaRetail }}')"
-                                                class="text-indigo-400 hover:text-indigo-300 transition-colors" title="Edit Data">
+                                                class="text-indigo-400 hover:text-indigo-300 transition-colors text-base" title="Edit Data">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </button>
 
-                                            {{-- Tombol Delete Button Form --}}
-                                            <form action="{{ route('admin.products.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Hapus produk ini secara permanen?')">
+                                            {{-- Tombol Hapus Produk Permanen --}}
+                                            <form action="{{ route('admin.products.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membuang produk {{ addslashes($p->name) }} ini secara permanen dari database Partlyfe?')">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-rose-500 hover:text-rose-400 transition-colors" title="Hapus Permanen">
+                                                <button type="submit" class="text-rose-500 hover:text-rose-400 transition-colors text-base" title="Hapus Permanen">
                                                     <i class="fa-solid fa-trash"></i>
                                                 </button>
                                             </form>
@@ -136,7 +148,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center text-xs text-slate-500 italic">Belum ada produk terdaftar di database Partlyfe.</td>
+                                    <td colspan="5" class="px-6 py-12 text-center text-xs text-slate-500 italic font-mono">Belum ada produk terdaftar di database Partlyfe.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -148,7 +160,7 @@
 
     {{-- MODAL 1: FORM TAMBAH PRODUK --}}
     <div id="addProductModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
-        <div class="glass-card w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl relative">
+        <div class="glass-card w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl relative animate-fadeIn">
             <div class="mb-5">
                 <h3 class="text-lg font-black text-white uppercase tracking-wider">Tambah Produk Baru</h3>
                 <p class="text-xs text-slate-500">Masukkan spesifikasi suku cadang baru beserta unggahan berkas gambar.</p>
@@ -162,7 +174,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Nama Suku Cadang</label>
-                        <input type="text" name="name" required placeholder="Contoh: Oli Mesin Motul 1L" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                        <input type="text" name="name" required placeholder="Contoh: Oli Mesin Motul 300V 1L" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -177,18 +189,18 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Stok Gudang</label>
-                            <input type="number" name="current_stock" min="0" required placeholder="10" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <input type="number" name="current_stock" min="0" required placeholder="10" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
                         </div>
                         <div>
-                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Harga Retail (Rp)</label>
-                            <input type="number" name="price" min="0" required placeholder="150000" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Harga Retail Level 1 (Rp)</label>
+                            <input type="number" name="price" min="0" required placeholder="150000" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
                         </div>
                     </div>
                     <input type="hidden" name="category_id" value="1">
                 </div>
                 <div class="mt-8 flex items-center justify-end gap-3 border-t border-white/5 pt-5">
                     <button type="button" onclick="toggleModal('addProductModal')" class="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">Batal</button>
-                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider px-6 py-3 rounded-xl transition">Simpan</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider px-6 py-3 rounded-xl transition">Simpan Produk</button>
                 </div>
             </form>
         </div>
@@ -196,12 +208,11 @@
 
     {{-- MODAL 2: FORM EDIT/UPDATE PRODUK --}}
     <div id="editProductModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
-        <div class="glass-card w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl relative">
+        <div class="glass-card w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl relative animate-fadeIn">
             <div class="mb-5">
                 <h3 class="text-lg font-black text-white uppercase tracking-wider">Edit Data Suku Cadang</h3>
-                <p class="text-xs text-slate-500">Ubah spesifikasi stok gudang dan ganti foto jika diperlukan.</p>
+                <p class="text-xs text-slate-500">Ubah spesifikasi stok gudang dan sesuaikan harga retail terbaru di sistem Partlyfe.</p>
             </div>
-            {{-- FIX ID: Di sini id form disesuaikan murni menjadi editProductForm agar singkron --}}
             <form id="editProductForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
@@ -227,11 +238,11 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Stok Gudang</label>
-                            <input type="number" id="edit_current_stock" name="current_stock" min="0" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <input type="number" id="edit_current_stock" name="current_stock" min="0" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
                         </div>
                         <div>
                             <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Harga Retail (Rp)</label>
-                            <input type="number" id="edit_price" name="price" min="0" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <input type="number" id="edit_price" name="price" min="0" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
                         </div>
                     </div>
                 </div>
@@ -243,7 +254,7 @@
         </div>
     </div>
 
-    {{-- Script JavaScript Perbaikan Sinkronisasi ID --}}
+    {{-- Driver JavaScript Kontrol Modal & Auto-Trigger Restock --}}
     <script>
         function toggleModal(modalId) {
             const modal = document.getElementById(modalId);
@@ -258,10 +269,29 @@
             document.getElementById('edit_current_stock').value = current_stock;
             document.getElementById('edit_price').value = price;
 
-            // FIX SINKRONISASI: Menggunakan 'editProductForm' sesuai dengan atribut id form di atas
+            // Memetakan action form update murni ke controller admin
             document.getElementById('editProductForm').action = `/admin/products/${id}`;
-            toggleModal('editProductModal');
+            
+            const modal = document.getElementById('editProductModal');
+            if (modal && modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+            }
         }
+
+        // 🚀 JURUS SAKTI AUTO-TRIGGER MODAL RESTOCK JIKA DIPICU DARI OVERVIEW
+        document.addEventListener("DOMContentLoaded", function() {
+            @if(isset($product))
+                // Mengambil nilai variabel kiriman controller untuk langsung menjeblok buka modal edit
+                openEditModal(
+                    '{{ $product->id }}', 
+                    '{{ addslashes($product->name) }}', 
+                    '{{ addslashes($product->brand) }}', 
+                    '{{ addslashes($product->item_code) }}', 
+                    '{{ $product->current_stock }}', 
+                    '{{ $product->price }}'
+                );
+            @endif
+        });
     </script>
 </body>
 </html>
