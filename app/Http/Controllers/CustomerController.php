@@ -218,7 +218,7 @@ class CustomerController extends Controller
     // 4. AREA TRANSAKSI & PENGATURAN USER
     // ==========================================================
 
-    public function transactions(Request $request)
+public function transactions(Request $request)
     {
         // 1. Ambil parameter filter status dari URL (contoh: ?status=menunggu)
         $statusFilter = $request->query('status');
@@ -227,24 +227,23 @@ class CustomerController extends Controller
         $query = Transaction::with('details.product')
             ->where('user_id', Auth::id());
 
-        // 3. 🧠 SINKRONISASI FILTER TAB BAHASA INDONESIA DENGAN DROPDOWN ADMIN
-        if ($statusFilter) {
-            if ($statusFilter == 'menunggu') {
-                $query->whereIn('status', ['Menunggu Pembayaran', 'pending', 'unpaid', 'menunggu']);
-            } elseif ($statusFilter == 'diproses') {
-                $query->whereIn('status', ['Sedang Diproses', 'processing', 'diproses']);
-            } elseif ($statusFilter == 'selesai') {
-                $query->whereIn('status', ['Selesai', 'success', 'settlement']);
-            } elseif ($statusFilter == 'gagal') {
-                $query->whereIn('status', ['Dibatalkan', 'expire', 'cancel', 'gagal']);
-            } else {
-                $query->where('status', $statusFilter);
-            }
+        // 3. SINKRONISASI FILTER TAB BAHASA INDONESIA KE ENUM DATABASE
+        $statusMap = [
+            'menunggu' => ['pending', 'unpaid'],
+            'diproses' => ['processing'],
+            'selesai' => ['shipped', 'delivered'],
+            'gagal' => ['cancelled']
+        ];
+
+        if ($statusFilter && isset($statusMap[$statusFilter])) {
+            $query->whereIn('status', $statusMap[$statusFilter]);
+        } elseif ($statusFilter) {
+            $query->where('status', $statusFilter);
         }
 
-        // 4. 🔥 EKSEKUSI DENGAN PAGINATION
+        // 4. EKSEKUSI DENGAN PAGINATION
         $transactions = $query->latest('created_at')->paginate(10);
-            
+
         return view('customer.transactions', compact('transactions', 'statusFilter'));
     }
 

@@ -92,11 +92,14 @@
                                 <tr class="hover:bg-white/[0.02] transition-colors">
                                     {{-- Kolom Gambar Produk --}}
                                     <td class="px-6 py-5">
-                                        @if($pathFoto)
-                                            <img src="{{ asset('storage/' . $pathFoto) }}" class="w-12 h-12 object-cover rounded-xl border border-white/10 shadow-md">
+                                        @php
+                                            $imagePath = $pathFoto ?? null;
+                                        @endphp
+                                        @if($imagePath)
+                                            <img src="{{ asset('storage/' . $imagePath) }}" class="w-12 h-12 object-cover rounded-xl border border-white/10 shadow-md" onerror="this.parentElement.innerHTML='<div class=&quot;w-12 h-12 bg-slate-800 rounded-xl border border-white/5 flex items-center justify-center text-slate-600&quot;><i class=&quot;fa-solid fa-box text-xs&quot;></i></div>'">
                                         @else
                                             <div class="w-12 h-12 bg-slate-800 rounded-xl border border-white/5 flex items-center justify-center text-slate-600">
-                                                <i class="fa-solid fa-image text-xs"></i>
+                                                <i class="fa-solid fa-box text-xs"></i>
                                             </div>
                                         @endif
                                     </td>
@@ -128,15 +131,15 @@
                                     {{-- Kolom Aksi Kontrol --}}
                                     <td class="px-6 py-5 text-center">
                                         <div class="flex items-center justify-center gap-4">
-                                            {{-- Tombol Edit Data Suku Cadang --}}
+                                            {{-- Tombol Edit Data Produk --}}
                                             <button type="button" 
-                                                onclick="openEditModal('{{ $p->id }}', '{{ addslashes($p->name) }}', '{{ addslashes($p->brand) }}', '{{ addslashes($p->item_code) }}', '{{ $p->current_stock }}', '{{ $hargaRetail }}')"
+                                                onclick="openEditModal('{{ $p->id }}', '{{ addslashes($p->name) }}', '{{ addslashes($p->brand) }}', '{{ addslashes($p->item_code) }}', '{{ $p->current_stock }}', '{{ $hargaRetail }}', '{{ $p->category_id }}', '{{ $p->min_stock ?? 0 }}')"
                                                 class="text-indigo-400 hover:text-indigo-300 transition-colors text-base" title="Edit Data">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </button>
 
                                             {{-- Tombol Hapus Produk Permanen --}}
-                                            <form action="{{ route('admin.products.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membuang produk {{ addslashes($p->name) }} ini secara permanen dari database Partlyfe?')">
+                                            <form action="{{ route('admin.products.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk {{ addslashes($p->name) }} secara permanen?')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="text-rose-500 hover:text-rose-400 transition-colors text-base" title="Hapus Permanen">
@@ -158,7 +161,11 @@
         </main>
     </div>
 
-    {{-- MODAL 1: FORM TAMBAH PRODUK --}}
+    @php
+    $categories = $categories ?? DB::table('categories')->get();
+@endphp
+
+{{-- MODAL 1: FORM TAMBAH PRODUK --}}
     <div id="addProductModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
         <div class="glass-card w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl relative animate-fadeIn">
             <div class="mb-5">
@@ -169,34 +176,56 @@
                 @csrf
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Foto Suku Cadang (.jpg / .png)</label>
+                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Foto Produk (.jpg/.png)</label>
                         <input type="file" name="image" accept="image/*" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 transition">
                     </div>
                     <div>
-                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Nama Suku Cadang</label>
-                        <input type="text" name="name" required placeholder="Contoh: Oli Mesin Motul 300V 1L" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Nama Produk</label>
+                        <input type="text" name="name" required placeholder="Oli Mesin Yamalube" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Brand / Merek</label>
-                            <input type="text" name="brand" required placeholder="Contoh: Motul" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <input type="text" name="brand" required placeholder="Yamalube" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
                         </div>
                         <div>
-                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Kode Item / SKU</label>
-                            <input type="text" name="item_code" required placeholder="Contoh: MOT-001" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Kode Item / SKU (Auto)</label>
+                            <input type="text" name="item_code" placeholder="Otomatis terisi" readonly class="w-full bg-slate-800/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-300 font-mono cursor-not-allowed">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Stok Gudang</label>
-                            <input type="number" name="current_stock" min="0" required placeholder="10" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
+                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Kategori</label>
+                            <select name="category_id" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                                <option value="">-- Pilih Kategori --</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Harga Retail Level 1 (Rp)</label>
-                            <input type="number" name="price" min="0" required placeholder="150000" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
+                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Stok Awal</label>
+                            <input type="number" name="current_stock" min="0" required placeholder="10" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
                         </div>
                     </div>
-                    <input type="hidden" name="category_id" value="1">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Min Stok</label>
+                            <input type="number" name="min_stock" min="0" value="0" placeholder="5" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Harga Retail (Rp)</label>
+                            <input type="number" name="price" min="0" required placeholder="70000" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Lokasi Rak (Opsional)</label>
+                        <input type="text" name="rack_location" placeholder="Rak A-2" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Deskripsi Produk</label>
+                        <textarea name="description" rows="3" placeholder="Kecocokan: Yamaha NMAX 2018-2022, Honda Vario 125..." class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition resize-none"></textarea>
+                    </div>
                 </div>
                 <div class="mt-8 flex items-center justify-end gap-3 border-t border-white/5 pt-5">
                     <button type="button" onclick="toggleModal('addProductModal')" class="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">Batal</button>
@@ -210,19 +239,25 @@
     <div id="editProductModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
         <div class="glass-card w-full max-w-lg rounded-3xl p-8 border border-white/10 shadow-2xl relative animate-fadeIn">
             <div class="mb-5">
-                <h3 class="text-lg font-black text-white uppercase tracking-wider">Edit Data Suku Cadang</h3>
+                <h3 class="text-lg font-black text-white uppercase tracking-wider">Edit Data Produk</h3>
                 <p class="text-xs text-slate-500">Ubah spesifikasi stok gudang dan sesuaikan harga retail terbaru di sistem Partlyfe.</p>
             </div>
             <form id="editProductForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="space-y-4">
+                    @if(isset($product) && $product->image)
+                        <div class="mb-2">
+                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Foto Lama</label>
+                            <img src="{{ asset('storage/' . $product->image) }}" class="w-20 h-20 object-cover rounded-xl border border-white/10">
+                        </div>
+                    @endif
                     <div>
-                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Ganti Foto Baru (Opsional)</label>
+                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Ganti Foto (Opsional)</label>
                         <input type="file" name="image" accept="image/*" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 transition">
                     </div>
                     <div>
-                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Nama Suku Cadang</label>
+                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Nama Produk</label>
                         <input type="text" id="edit_name" name="name" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -231,19 +266,42 @@
                             <input type="text" id="edit_brand" name="brand" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
                         </div>
                         <div>
-                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Kode Item / SKU</label>
-                            <input type="text" id="edit_item_code" name="item_code" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Kode Item / SKU (Auto)</label>
+                            <input type="text" id="edit_item_code" name="item_code" placeholder="Otomatis terisi" readonly class="w-full bg-slate-800/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-300 font-mono cursor-not-allowed">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
+                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Kategori</label>
+                            <select id="edit_category_id" name="category_id" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                                <option value="">-- Pilih Kategori --</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}" {{ isset($product) && $product->category_id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Stok Gudang</label>
                             <input type="number" id="edit_current_stock" name="current_stock" min="0" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Min Stok</label>
+                            <input type="number" id="edit_min_stock" name="min_stock" min="0" value="0" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
                         </div>
                         <div>
                             <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Harga Retail (Rp)</label>
                             <input type="number" id="edit_price" name="price" min="0" required class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition font-mono">
                         </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Lokasi Rak</label>
+                        <input type="text" id="edit_rack_location" name="rack_location" placeholder="Rak A-2" class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2">Deskripsi Produk</label>
+                        <textarea id="edit_description" name="description" rows="3" placeholder="Kecocokan: Yamaha NMAX 2018-2022..." class="w-full bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition resize-none"></textarea>
                     </div>
                 </div>
                 <div class="mt-8 flex items-center justify-end gap-3 border-t border-white/5 pt-5">
@@ -254,22 +312,40 @@
         </div>
     </div>
 
-    {{-- Driver JavaScript Kontrol Modal & Auto-Trigger Restock --}}
+{{-- Driver JavaScript Kontrol Modal & Auto-Trigger Restock --}}
     <script>
         function toggleModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) modal.classList.toggle('hidden');
         }
 
-        // Fungsi Pengisi Data Otomatis & Penembak Rute Update Dinamis
-        function openEditModal(id, name, brand, item_code, current_stock, price) {
+        function generateSKU() {
+            const categorySelect = document.querySelector('#addProductModal select[name="category_id"]');
+            const nameInput = document.querySelector('#addProductModal input[name="name"]');
+            const skuInput = document.querySelector('#addProductModal input[name="item_code"]');
+            
+            const categoryName = categorySelect.options[categorySelect.selectedIndex]?.text || 'GEN';
+            const productName = nameInput?.value || 'PRD';
+            
+            const catPrefix = categoryName.substring(0, 3).toUpperCase();
+            const namePrefix = productName.replace(/\s+/g, '').substring(0, 3).toUpperCase();
+            const year = new Date().getFullYear().toString().substring(2);
+            
+            const sku = `${catPrefix}-${namePrefix}-${year}`;
+            if (skuInput) skuInput.value = sku;
+        }
+
+        function openEditModal(id, name, brand, item_code, current_stock, price, category_id, min_stock, rack_location = '', description = '') {
             document.getElementById('edit_name').value = name;
             document.getElementById('edit_brand').value = brand;
             document.getElementById('edit_item_code').value = item_code;
             document.getElementById('edit_current_stock').value = current_stock;
             document.getElementById('edit_price').value = price;
-
-            // Memetakan action form update murni ke controller admin
+            document.getElementById('edit_category_id').value = category_id;
+            document.getElementById('edit_min_stock').value = min_stock;
+            document.getElementById('edit_rack_location').value = rack_location;
+            document.getElementById('edit_description').value = description;
+            
             document.getElementById('editProductForm').action = `/admin/products/${id}`;
             
             const modal = document.getElementById('editProductModal');
@@ -278,17 +354,24 @@
             }
         }
 
-        // 🚀 JURUS SAKTI AUTO-TRIGGER MODAL RESTOCK JIKA DIPICU DARI OVERVIEW
         document.addEventListener("DOMContentLoaded", function() {
+            const categorySelect = document.querySelector('#addProductModal select[name="category_id"]');
+            const nameInput = document.querySelector('#addProductModal input[name="name"]');
+            if (categorySelect) categorySelect.addEventListener('change', generateSKU);
+            if (nameInput) nameInput.addEventListener('input', generateSKU);
+
             @if(isset($product))
-                // Mengambil nilai variabel kiriman controller untuk langsung menjeblok buka modal edit
                 openEditModal(
                     '{{ $product->id }}', 
                     '{{ addslashes($product->name) }}', 
                     '{{ addslashes($product->brand) }}', 
                     '{{ addslashes($product->item_code) }}', 
                     '{{ $product->current_stock }}', 
-                    '{{ $product->price }}'
+                    '{{ $product->price }}',
+                    '{{ $product->category_id }}',
+                    '{{ $product->min_stock ?? 0 }}',
+                    '{{ addslashes($product->rack_location ?? '') }}',
+                    '{{ addslashes($product->description ?? '') }}'
                 );
             @endif
         });

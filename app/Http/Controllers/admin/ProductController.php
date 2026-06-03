@@ -13,7 +13,8 @@ class ProductController extends Controller
     public function index()
     {
         $products = DB::table('products')->latest('id')->get();
-        return view('admin.products', compact('products'));
+        $categories = DB::table('categories')->get();
+        return view('admin.products', compact('products', 'categories'));
     }
 
     // =======================================================================
@@ -21,14 +22,12 @@ class ProductController extends Controller
     // =======================================================================
     public function edit($id)
     {
-        // 1. Ambil data produk menggunakan Query Builder murni kelompokmu
         $product = DB::table('products')->where('id', $id)->first();
         
         if (!$product) {
             abort(404, 'Suku cadang tidak ditemukan di database.');
         }
 
-        // 2. Tarik harga level 1 (Retail) suku cadang ini
         $priceRow = DB::table('product_prices')
             ->where('product_id', $id)
             ->where('price_level', 1)
@@ -36,39 +35,51 @@ class ProductController extends Controller
 
         $product->price = $priceRow ? $priceRow->price : 0;
 
-        // 3. Ambil semua data produk untuk merender tabel utamanya
-        $products = DB::table('products')->latest('id')->get();
+        $imageRow = DB::table('product_images')->where('product_id', $id)->first();
+        $product->image = $imageRow ? $imageRow->image_path : null;
 
-        // 4. JURUS KUNCI: Buka file products.blade.php bawaan kelompokmu
-        // dan kirim variabel 'open_edit_modal' berisi data produk target
-        return view('admin.products', compact('products', 'product'))->with('open_edit_modal', $id);
+        $products = DB::table('products')->latest('id')->get();
+        $categories = DB::table('categories')->get();
+
+        return view('admin.products', compact('products', 'product', 'categories'))->with('open_edit_modal', $id);
     }
-    // 2. CREATE: Simpan produk baru + Unggah Foto sesuai kolom database phpMyAdmin
+
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'brand' => 'required|string|max:255',
-            'item_code' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
             'current_stock' => 'required|integer|min:0',
+            'min_stock' => 'required|integer|min:0',
             'price' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048'
         ]);
 
+        $itemCode = $request->item_code;
+        if (empty($itemCode)) {
+            $category = DB::table('categories')->where('id', $request->category_id)->first();
+            $categoryPrefix = strtoupper(substr($category->name ?? 'GEN', 0, 3));
+            $namePrefix = strtoupper(substr($request->name ?? 'PRD', 0, 3));
+            $timestamp = substr(now()->format('Y'), -2);
+            $itemCode = $categoryPrefix . '-' . $namePrefix . '-' . $timestamp;
+        }
+
         DB::beginTransaction();
         try {
-            // Masukkan data dasar ke tabel products
             $productId = DB::table('products')->insertGetId([
                 'name' => $request->name,
                 'brand' => $request->brand,
-                'item_code' => $request->item_code,
+                'item_code' => $itemCode,
+                'category_id' => $request->category_id,
                 'current_stock' => $request->current_stock,
-                'category_id' => $request->category_id ?? 1,
+                'min_stock' => $request->min_stock,
+                'description' => $request->description,
+                'rack_location' => $request->rack_location,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
 
-            // Masukkan harga ke tabel product_prices (price_level 1)
             DB::table('product_prices')->insert([
                 'product_id' => $productId,
                 'price_level' => 1,
@@ -77,13 +88,11 @@ class ProductController extends Controller
                 'updated_at' => now()
             ]);
 
-            // Proses Enkripsi Unggah Foto ke Storage MacBook
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $fileName = time() . '_' . $file->getClientOriginalName();
                 $file->storeAs('public/products', $fileName);
 
-                // Catat ke tabel relasi foto (product_images)
                 DB::table('product_images')->insert([
                     'product_id' => $productId,
                     'image_path' => 'products/' . $fileName,
@@ -93,39 +102,47 @@ class ProductController extends Controller
             }
 
             DB::commit();
-            return redirect()->back()->with('success', 'Produk dan Foto berhasil disimpan ke database!');
+            return redirect()->back()->with('success', 'Produk berhasil disimpan!');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal menambah produk: ' . $e->getMessage());
         }
     }
 
-    // 3. UPDATE: Perbarui data produk via Modal Button / Form Edit Restock
-    public function update(Request $request, $id)
+public function update(Request $request, $id)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'brand' => 'required|string|max:255',
-            'item_code' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
             'current_stock' => 'required|integer|min:0',
+            'min_stock' => 'required|integer|min:0',
             'price' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048'
         ]);
 
         DB::beginTransaction();
         try {
-            // Update data di tabel products
+            $updateData = [
+                'name' => $request->name,
+                'brand' => $request->brand,
+                'category_id' => $request->category_id,
+                'current_stock' => $request->current_stock,
+                'min_stock' => $request->min_stock,
+                'updated_at' => now()
+            ];
+
+            if ($request->has('item_code') && !empty($request->item_code)) {
+                $updateData['item_code'] = $request->item_code;
+            }
+
+            $updateData['description'] = $request->description;
+            $updateData['rack_location'] = $request->rack_location;
+
             DB::table('products')
                 ->where('id', $id)
-                ->update([
-                    'name' => $request->name,
-                    'brand' => $request->brand,
-                    'item_code' => $request->item_code,
-                    'current_stock' => $request->current_stock,
-                    'updated_at' => now()
-                ]);
+                ->update($updateData);
 
-            // Update harga di tabel product_prices
             DB::table('product_prices')
                 ->where('product_id', $id)
                 ->where('price_level', 1)
@@ -134,20 +151,17 @@ class ProductController extends Controller
                     'updated_at' => now()
                 ]);
 
-            // Jika admin mengganti atau menambahkan foto baru saat edit
             if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $file->storeAs('public/products', $fileName);
-
-                // Hapus pencatatan foto lama jika ada
                 $oldImage = DB::table('product_images')->where('product_id', $id)->first();
                 if ($oldImage) {
                     Storage::delete('public/' . $oldImage->image_path);
                     DB::table('product_images')->where('id', $oldImage->id)->delete();
                 }
 
-                // Masukkan foto baru
+                $file = $request->file('image');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $file->storeAs('public/products', $fileName);
+
                 DB::table('product_images')->insert([
                     'product_id' => $id,
                     'image_path' => 'products/' . $fileName,
@@ -157,12 +171,10 @@ class ProductController extends Controller
             }
 
             DB::commit();
-            
-            // 🚀 ALKAN ALUR: Lempar balik ke dashboard utama admin agar perubahan langsung terpantau live
-            return redirect()->route('admin.dashboard')->with('success', 'Data stok suku cadang berhasil diperbarui di database!');
+            return redirect()->route('admin.products.index')->with('success', 'Produk berhasil diperbarui!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal memperbarui data produk.');
+            return redirect()->back()->with('error', 'Gagal memperbarui produk: ' . $e->getMessage());
         }
     }
 

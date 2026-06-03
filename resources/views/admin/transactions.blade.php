@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Transaksi | Partlyfe Admin</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -33,7 +34,7 @@
                 </thead>
                 <tbody class="divide-y divide-white/5">
                     @forelse($transactions as $t)
-                        <tr class="hover:bg-white/[0.02] transition-colors duration-150">
+                        <tr class="hover:bg-white/[0.02] transition-colors duration-150" data-invoice="{{ $t->invoice_number ?? $t->transaction_real_id }}">
                             
                             <td class="px-6 py-5 text-xs text-slate-400 font-medium">
                                 {{ isset($t->created_at) ? date('d M Y, H:i', strtotime($t->created_at)) : '-' }}
@@ -51,29 +52,18 @@
                                 {{ $t->payment_method ?? 'MIDTRANS API' }}
                             </td>
 
-                            {{-- BADGE TEKS SIMPEL & AMAN UNTUK MENTORING --}}
+                            {{-- BADGE STATUS DINAMIS --}}
                             <td class="px-6 py-5">
                                 @php
                                     $currentStatus = strtolower(trim($t->status ?? 'pending'));
                                 @endphp
-                                
-                                @if(in_array($currentStatus, ['pending', 'unpaid', 'menunggu pembayaran']))
-                                    <span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider">
-                                        Menunggu Bayar
-                                    </span>
-                                @elseif(in_array($currentStatus, ['processing', 'diproses', 'sedang diproses']))
-                                    <span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider">
-                                        Sedang Diproses
-                                    </span>
-                                @elseif(in_array($currentStatus, ['success', 'selesai', 'settlement', 'paid']))
-                                    <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider">
-                                        Selesai
-                                    </span>
-                                @else
-                                    <span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider">
-                                        Dibatalkan
-                                    </span>
-                                @endif
+
+                                <select onchange="updateStatus(this)" data-id="{{ $t->invoice_number ?? $t->transaction_real_id }}" class="status-dropdown bg-slate-800/60 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg px-3 py-2 border border-slate-600 cursor-pointer hover:border-amber-500 transition-colors">
+                                    <option value="Menunggu Bayar" {{ in_array($currentStatus, ['pending', 'unpaid']) ? 'selected' : '' }}>Menunggu Bayar</option>
+                                    <option value="Sedang Diproses" {{ $currentStatus == 'processing' ? 'selected' : '' }}>Sedang Diproses</option>
+                                    <option value="Selesai" {{ in_array($currentStatus, ['shipped', 'delivered']) ? 'selected' : '' }}>Selesai</option>
+                                    <option value="Dibatalkan" {{ $currentStatus == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
+                                </select>
                             </td>
 
                             <td class="px-6 py-5 text-right font-mono font-black text-white text-sm">
@@ -91,5 +81,45 @@
             </table>
         </div>
     </main>
+
+    <script>
+        async function updateStatus(selectElement) {
+            const id = selectElement.dataset.id;
+            const status = selectElement.value;
+
+            try {
+                const response = await fetch('{{ route("admin.transactions.updateStatus") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ id: id, status: status })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update badge visual tanpa reload
+                    const row = selectElement.closest('tr');
+                    showToast('Status berhasil diupdate!', 'success');
+                } else {
+                    showToast(data.message || 'Gagal update status', 'error');
+                    selectElement.selectedIndex = 0; // Reset dropdown
+                }
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            let toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-xs font-bold z-50 ${type === 'success' ? 'bg-emerald-500/90 text-white' : 'bg-rose-500/90 text-white'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
 </body>
 </html>

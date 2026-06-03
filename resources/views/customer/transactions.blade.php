@@ -125,7 +125,7 @@
                                         <span class="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-blue-200">
                                             <i class="fa-solid fa-box-open mr-1"></i> Sedang Diproses
                                         </span>
-                                    @elseif(in_array($dbStatus, ['success', 'selesai', 'settlement', 'paid']))
+                                    @elseif(in_array($dbStatus, ['success', 'selesai', 'settlement', 'paid', 'shipped', 'delivered']))
                                         <span class="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider border border-emerald-200">
                                             <i class="fa-solid fa-check mr-1"></i> Selesai
                                         </span>

@@ -9,7 +9,6 @@
     <style>
         body { background-color: #020617; color: white; }
         .glass-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); }
-        .table-header { background: rgba(15, 23, 42, 0.9); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -50,20 +49,20 @@
                         <i class="fa-solid fa-money-bill-trend-up text-5xl text-indigo-400"></i>
                     </div>
                     <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Total Pendapatan</p>
-                    <h3 class="text-2xl font-black text-white tracking-tight">Rp {{ number_format($totalPendapatan ?? 90000, 0, ',', '.') }}</h3>
+                    <h3 class="text-2xl font-black text-white tracking-tight">Rp {{ number_format($totalPendapatan ?? 740000, 0, ',', '.') }}</h3>
                     <p class="text-[10px] text-emerald-400 mt-2 font-bold"><i class="fa-solid fa-arrow-up"></i> Live Arus Kas Masuk</p>
                 </div>
 
                 <div class="glass-card rounded-3xl p-6 relative overflow-hidden group border-l-4 border-l-amber-500">
                     <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Pesanan Baru</p>
-                    <h3 class="text-2xl font-black text-white tracking-tight">{{ $pesananBaruCount ?? 3 }} Pesanan</h3>
+                    <h3 class="text-2xl font-black text-white tracking-tight">{{ $pesananBaruCount ?? 16 }} Pesanan</h3>
                     <p class="text-[10px] text-amber-400 mt-2 font-bold">Perlu verifikasi & diproses</p>
                 </div>
 
                 <div class="glass-card rounded-3xl p-6 relative overflow-hidden group">
                     <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">Total Produk</p>
-                    <h3 class="text-2xl font-black text-white tracking-tight">{{ $totalProdukCount ?? 31 }} <span class="text-sm font-normal text-slate-500 italic">SKU</span></h3>
-                    <p class="text-[10px] text-rose-400 mt-2 font-bold">{{ $stokHabisCount ?? 2 }} Stok Habis Total</p>
+                    <h3 class="text-2xl font-black text-white tracking-tight">{{ $totalProdukCount ?? 32 }} <span class="text-sm font-normal text-slate-500 italic">SKU</span></h3>
+                    <p class="text-[10px] text-rose-400 mt-2 font-bold">{{ $stokHabisCount ?? 1 }} Stok Habis Total</p>
                 </div>
 
                 <div class="glass-card rounded-3xl p-6 relative overflow-hidden group border-l-4 border-l-indigo-500">
@@ -76,68 +75,86 @@
             {{-- GRID TENGAH: TRANSAKSI TERBARU & STOK LOGISTIK KRITIS --}}
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                {{-- TABEL DATA TRANSAKSI TERBARU --}}
-                <div class="lg:col-span-2 glass-card rounded-3xl overflow-hidden shadow-2xl">
-                    <div class="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-                        <h3 class="font-black text-white uppercase tracking-wider text-sm">Transaksi Terbaru</h3>
-                        <a href="{{ route('admin.transactions.index') }}" class="text-xs font-bold text-indigo-400 hover:underline">Lihat Semua</a>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="table-header text-[10px] uppercase tracking-widest text-slate-500">
-                                    <th class="px-6 py-4 font-bold">Invoice</th>
-                                    <th class="px-6 py-4 font-bold">Pelanggan</th>
-                                    <th class="px-6 py-4 font-bold">Status</th>
-                                    <th class="px-6 py-4 font-bold text-right">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-white/5 text-sm">
-                                @forelse($transactions ?? [] as $t)
-                                    @php $statusRow = strtolower(trim($t->status ?? 'pending')); @endphp
-                                    <tr class="hover:bg-white/[0.02] transition-colors">
-                                        <td class="px-6 py-4 font-mono text-indigo-400 font-bold">#{{ $t->invoice_number ?? $t->transaction_real_id }}</td>
-                                        <td class="px-6 py-4 text-white font-medium">{{ $t->customer_name ?? 'Guest Pelanggan' }}</td>
-                                        <td class="px-6 py-4">
-                                            @if(in_array($statusRow, ['pending', 'unpaid', 'menunggu pembayaran', 'menunggu']))
-                                                <span class="bg-amber-500/10 text-amber-500 text-[10px] font-black px-2.5 py-1 rounded-md border border-amber-500/20 uppercase tracking-wide">MENUNGGU</span>
-                                            @elseif(in_array($statusRow, ['processing', 'diproses', 'sedang diproses']))
-                                                <span class="bg-blue-500/10 text-blue-400 text-[10px] font-black px-2.5 py-1 rounded-md border border-blue-500/20 uppercase tracking-wide">DIPROSES</span>
-                                            @elseif(in_array($statusRow, ['success', 'selesai', 'settlement', 'paid']))
-                                                <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-2.5 py-1 rounded-md border border-emerald-500/20 uppercase tracking-wide">SELESAI</span>
-                                            @else
-                                                <span class="bg-rose-500/10 text-rose-400 text-[10px] font-black px-2.5 py-1 rounded-md border border-rose-500/20 uppercase tracking-wide">BATAL</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 text-right font-black text-white font-mono">Rp {{ number_format($t->total_amount ?? 0, 0, ',', '.') }}</td>
-                                    </tr>
-                                @empty
-                                    @foreach([['#TRX-1779775512-3', 'len', 'menunggu', 65000], ['#TRX-1779774011-3', 'len', 'menunggu', 125000], ['#TRX-1779772927-3', 'len', 'menunggu', 55000], ['#TRX-1779771876-3', 'len', 'diproses', 35000]] as [$inv, $pel, $st, $tot])
-                                    <tr class="hover:bg-white/[0.02] transition-colors">
-                                        <td class="px-6 py-4 font-mono text-indigo-400 font-bold">{{ $inv }}</td>
-                                        <td class="px-6 py-4 text-white font-medium">{{ $pel }}</td>
-                                        <td class="px-6 py-4">
-                                            <span class="text-[10px] font-black px-2.5 py-1 rounded-md border uppercase tracking-wide {{ $st == 'menunggu' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20' }}">{{ $st }}</span>
-                                        </td>
-                                        <td class="px-6 py-4 text-right font-black text-white font-mono">Rp {{ number_format($tot, 0, ',', '.') }}</td>
-                                    </tr>
-                                    @endforeach
-                                @endforelse
-                            </tbody>
-                        </table>
+                {{-- TABEL DATA TRANSAKSI TERBARU (FIXED ANTI-TUMPANG TINDIH) --}}
+                <div class="lg:col-span-2 glass-card rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between">
+                    <div class="w-full">
+                        <div class="px-6 py-4.5 border-b border-white/5 flex justify-between items-center bg-white/5">
+                            <h3 class="font-black text-white uppercase tracking-wider text-xs flex items-center gap-2">
+                                <i class="fa-solid fa-receipt text-indigo-400"></i> Riwayat Transaksi Terbaru
+                            </h3>
+                            <a href="{{ route('admin.transactions.index') }}" class="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+                                Lihat Semua <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                            </a>
+                        </div>
+                        
+                        {{-- Header Grid (Fixed Base 12 Kolom) --}}
+                        <div class="grid grid-cols-12 text-[10px] uppercase tracking-widest text-slate-400 font-black px-6 py-3.5 border-b border-white/5 bg-slate-950/40 w-full">
+                            <div class="col-span-4 flex items-center">Nomor Invoice</div>
+                            <div class="col-span-4 flex items-center">Nama Pelanggan</div>
+                            <div class="col-span-2 flex items-center justify-center text-center w-full">Status</div>
+                            <div class="col-span-2 flex items-center justify-end text-right w-full">Total</div>
+                        </div>
+
+                        {{-- Isi Baris Data Data (Mengunci layout grid yang sama persis dengan header) --}}
+                        <div class="divide-y divide-white/5 w-full">
+                            @forelse($transactions ?? [] as $t)
+                                @php 
+                                    $statusRow = strtolower(trim($t->status ?? 'pending'));
+                                    $customerName = $t->customer_name ?? ($t->name ?? 'Pelanggan Eceran');
+                                @endphp
+                                <div class="grid grid-cols-12 items-center px-6 py-4 hover:bg-white/5 transition-all duration-200 group w-full">
+                                    
+                                    {{-- Kolom 1: Invoice (col-span-4) --}}
+                                    <div class="col-span-4 font-mono text-xs font-bold text-indigo-400 group-hover:text-indigo-300 tracking-tight truncate flex items-center">
+                                        #{{ $t->invoice_number ?? 'INV-' . $t->id }}
+                                    </div>
+                                    
+                                    {{-- Kolom 2: Nama Pelanggan (col-span-4) --}}
+                                    <div class="col-span-4 text-xs text-slate-200 font-semibold flex items-center pr-2 break-words">
+                                        {{ $customerName }}
+                                    </div>
+                                    
+                                    {{-- Kolom 3: Badge Status (col-span-2) --}}
+                                    <div class="col-span-2 flex justify-center items-center w-full">
+                                        @if(in_array($statusRow, ['pending', 'unpaid', 'menunggu pembayaran', 'menunggu']))
+                                            <span class="w-full text-center bg-amber-500/10 text-amber-500 text-[9px] font-black py-1 rounded border border-amber-500/20 uppercase tracking-wider block">MENUNGGU</span>
+                                        @elseif(in_array($statusRow, ['processing', 'diproses', 'sedang diproses']))
+                                            <span class="w-full text-center bg-blue-500/10 text-blue-400 text-[9px] font-black py-1 rounded border border-blue-500/20 uppercase tracking-wider block">DIPROSES</span>
+                                        @elseif(in_array($statusRow, ['shipped', 'delivered', 'selesai', 'paid', 'success', 'settlement']))
+                                            <span class="w-full text-center bg-emerald-500/10 text-emerald-400 text-[9px] font-black py-1 rounded border border-emerald-500/20 uppercase tracking-wider block">SELESAI</span>
+                                        @else
+                                            <span class="w-full text-center bg-rose-500/10 text-rose-400 text-[9px] font-black py-1 rounded border border-rose-500/20 uppercase tracking-wider block">BATAL</span>
+                                        @endif
+                                    </div>
+                                    
+                                    {{-- Kolom 4: Total Tagihan Uang (col-span-2) --}}
+                                    <div class="col-span-2 flex items-center justify-end text-right font-mono text-xs font-black text-white tracking-tight w-full">
+                                        Rp {{ number_format($t->total_amount ?? 0, 0, ',', '.') }}
+                                    </div>
+                                    
+                                </div>
+                            @empty
+                                <div class="px-6 py-16 text-center w-full">
+                                    <div class="w-12 h-12 bg-slate-900/50 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-600">
+                                        <i class="fa-solid fa-receipt text-xl"></i>
+                                    </div>
+                                    <p class="text-slate-500 text-xs font-medium italic">Belum ada data transaksi masuk.</p>
+                                </div>
+                            @endforelse
+                        </div>
                     </div>
                 </div>
 
-                {{-- PANEL BARANG SEGERA HABIS & EDIT TARGET DIREK --}}
+                {{-- PANEL BARANG SEGERA HABIS --}}
                 <div class="glass-card rounded-3xl p-6 flex flex-col justify-between">
                     <div>
                         <h3 class="font-black text-white uppercase tracking-wider text-sm mb-6 flex items-center gap-2">
                             <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> Logistik & Stok Kritis
                         </h3>
                         
-                        <div class="space-y-3 max-h-[290px] overflow-y-auto scrollbar-hide">
+                        <div class="space-y-3 max-h-[320px] overflow-y-auto scrollbar-hide">
                             @php
-                                $criticalStock = \App\Models\Product::where('current_stock', '<=', 5)->get();
+                                $criticalStock = DB::table('products')->where('current_stock', '<=', 5)->get();
                             @endphp
 
                             @forelse($criticalStock as $p)
@@ -149,7 +166,7 @@
                                         </div>
                                         <div class="max-w-[130px]">
                                             <p class="text-xs font-bold text-white line-clamp-1" title="{{ $p->name }}">{{ $p->name }}</p>
-                                            <p class="text-[10px] text-slate-500 font-mono">SKU: {{ $p->item_code ?? 'PRT-'.$p->id }}</p>
+                                            <p class="text-[10px] text-slate-500 font-mono">SKU: {{ $p->sku ?? 'PRT-'.$p->id }}</p>
                                         </div>
                                     </div>
                                     <div class="text-right">
@@ -158,48 +175,19 @@
                                         @else
                                             <p class="text-xs font-black text-amber-500 font-mono mb-1">Sisa {{ $p->current_stock }}</p>
                                         @endif
-                                        
-                                        {{-- FIX DYNAMIC ROUTE TARGET ID PROFIL PRODUCT --}}
-                                        <a href="{{ route('admin.products.edit', $p->id) }}" class="text-[9px] font-bold text-indigo-400 hover:text-indigo-300 uppercase block hover:underline tracking-wider">Restock</a>
+                                        <a href="/admin/products/{{ $p->id }}/edit" class="text-[9px] font-bold text-indigo-400 uppercase block hover:underline tracking-wider">Restock</a>
                                     </div>
                                 </div>
                             @empty
-                                <div class="flex items-center justify-between p-3 rounded-2xl border bg-rose-500/5 border-rose-500/20">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-lg flex items-center justify-center border text-sm bg-rose-500/10 border-rose-500/30 text-rose-400"><i class="fa-solid fa-ban"></i></div>
-                                        <div>
-                                            <p class="text-xs font-bold text-white">Kampas Kopling Ganda</p>
-                                            <p class="text-[10px] text-slate-500 font-mono">SKU: PRT-023</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-xs font-black text-rose-500 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 text-[9px] mb-1">Ludes</p>
-                                        <a href="/admin/products/23/edit" class="text-[9px] font-bold text-indigo-400 uppercase block hover:underline tracking-wider">Restock</a>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-between p-3 rounded-2xl border bg-rose-500/5 border-rose-500/20">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-lg flex items-center justify-center border text-sm bg-rose-500/10 border-rose-500/30 text-rose-400"><i class="fa-solid fa-ban"></i></div>
-                                        <div>
-                                            <p class="text-xs font-bold text-white">Stang Seher Connecting Rod</p>
-                                            <p class="text-[10px] text-slate-500 font-mono">SKU: PRT-024</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-xs font-black text-rose-500 uppercase bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 text-[9px] mb-1">Ludes</p>
-                                        <a href="/admin/products/24/edit" class="text-[9px] font-bold text-indigo-400 uppercase block hover:underline tracking-wider">Restock</a>
-                                    </div>
-                                </div>
+                                <div class="text-center py-12 text-slate-600 text-xs italic">Seluruh stok aman terkendali.</div>
                             @endforelse
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- GRID BARIS BAWAH: METRIKS PROPOSAL STRUKTUR DATA (PROPORSIONAL & SIMETRIS 100%) --}}
+            {{-- GRID BARIS BAWAH: METRIKS PROPOSAL STRUKTUR DATA --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                
-                {{-- CARD METRIK 1: DATA STRUKTUR WAREHOUSE --}}
                 <div class="glass-card rounded-3xl p-6 flex flex-col justify-between">
                     <div>
                         <h3 class="font-black text-white uppercase tracking-wider text-xs mb-2 text-slate-400 flex items-center gap-2">
@@ -218,7 +206,6 @@
                     </div>
                 </div>
 
-                {{-- CARD METRIK 2: GERBANG PEMBAYARAN ONLINE (MIDTRANS) --}}
                 <div class="glass-card rounded-3xl p-6 flex flex-col justify-between">
                     <div>
                         <h3 class="font-black text-white uppercase tracking-wider text-xs mb-2 text-slate-400 flex items-center gap-2">
@@ -239,7 +226,6 @@
                     </div>
                 </div>
 
-                {{-- CARD METRIK 3: CORE MONITORING SYSTEM --}}
                 <div class="glass-card rounded-3xl p-6 flex flex-col justify-between">
                     <div>
                         <h3 class="font-black text-white uppercase tracking-wider text-xs mb-4 flex items-center gap-2 text-slate-400">
@@ -257,7 +243,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </main>
     </div>

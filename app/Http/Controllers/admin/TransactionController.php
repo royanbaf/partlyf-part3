@@ -39,35 +39,67 @@ class TransactionController extends Controller
             'status' => 'required|string'
         ]);
 
-        $statusInput = trim($request->status);
+        $identifier = $request->id;
+        $statusInput = strtolower(trim($request->status));
 
-        try {
-            DB::table('transactions')
-                ->where('id', $request->id)
-                ->orWhere('invoice_number', $request->id)
-                ->update([
-                    'status' => $statusInput,
-                    'updated_at' => now()
-                ]);
-                
-        } catch (\Exception $e) {
-            try {
-                DB::table('transactions')
-                    ->where('id', $request->id)
-                    ->orWhere('invoice_number', $request->id)
-                    ->update([
-                        'status' => strtoupper($statusInput),
-                        'updated_at' => now()
-                    ]);
-            } catch (\Exception $e2) {
-                // Fail-safe logging
-            }
+        // Mapping UI bahasa Indonesia ke nilai ENUM database
+        $statusMap = [
+            'menunggu bayar' => 'pending',
+            'sedang diproses' => 'processing', 
+            'selesai' => 'shipped',
+            'dibatalkan' => 'cancelled',
+            'diproses' => 'processing',
+            'proses' => 'processing',
+        ];
+
+        $dbStatus = $statusMap[$statusInput] ?? $statusInput;
+
+        // Validasi nilai ENUM yang valid di database
+        $validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+        if (!in_array($dbStatus, $validStatuses)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Status tidak valid. Gunakan: pending, processing, shipped, delivered, atau cancelled. Diterima: ' . $dbStatus
+            ], 400);
         }
 
-        return response()->json([
-            'success' => true, 
-            'message' => 'Status berhasil disinkronkan!'
-        ]);
+        try {
+            // FIX: Deteksi tipe input untuk mencegah error truncated INTEGER
+            if (is_numeric($identifier)) {
+                $updated = DB::table('transactions')
+                    ->where('id', (int)$identifier)
+                    ->update([
+                        'status' => $dbStatus,
+                        'updated_at' => now()
+                    ]);
+            } else {
+                $updated = DB::table('transactions')
+                    ->where('invoice_number', $identifier)
+                    ->update([
+                        'status' => $dbStatus,
+                        'updated_at' => now()
+                    ]);
+            }
+
+            if ($updated > 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Status berhasil disinkronkan!',
+                    'new_status' => $dbStatus
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi tidak ditemukan.'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal update: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // =======================================================================
@@ -174,54 +206,52 @@ class TransactionController extends Controller
     }
 
     // =======================================================================
-    // 🎯 FIX TOTAL: Alur Eksekusi Status 'paid' & Potong Stok Berurutan (Aman)
+    // =======================================================================
+    // 🎯 FIX TOTAL: Alur Eksekusi Status Valid & Potong Stok Berurutan (Aman)
     // =======================================================================
     public function completePosPayment(Request $request)
     {
         $orderId = $request->input('order_id');
         
+        if (empty($orderId)) {
+            return response()->json(['status' => 'error', 'message' => 'Order ID wajib diisi.'], 400);
+        }
+
         DB::beginTransaction();
         try {
             // 1. Cari transaksi berdasarkan nomor invoice
-            $transaction = DB::table('transactions')->where('invoice_number', $orderId)->first();
+            $transaction = DB::table('transactions')
+                ->where('invoice_number', $orderId)
+                ->first();
+
             if (!$transaction) {
                 return response()->json(['status' => 'error', 'message' => 'Transaksi tidak ditemukan.'], 404);
             }
 
-            // 🚀 STEP 1: Update status transaksi menjadi 'paid' menggunakan Eloquent/Query Builder standar.
-            // Pilihan 'paid' disesuaikan dengan isi ENUM database kelompokmu agar tidak memicu truncated error.
+            // STEP 1: Update status transaksi menjadi 'processing' (nilai ENUM valid)
             DB::table('transactions')
                 ->where('id', $transaction->id)
                 ->update([
-                    'status' => 'paid',
+                    'status' => 'processing',
                     'updated_at' => now()
                 ]);
 
-            // 🚀 STEP 2: Ambil rincian produk yang dibeli untuk memotong stok fisik
-            $details = DB::table('transaction_details')->where('transaction_id', $transaction->id)->get();
-            
+            // STEP 2: Ambil rincian produk yang dibeli untuk memotong stok fisik
+            $details = DB::table('transaction_details')
+                ->where('transaction_id', $transaction->id)
+                ->get();
+
             foreach ($details as $detail) {
-                $product = DB::table('products')->where('id', $detail->product_id)->first();
-                if ($product) {
-                    // Hitung sisa stok (pastikan tidak minus)
-                    $newStock = max(0, $product->current_stock - $detail->qty);
-                    
-                    // Eksekusi pembaruan kuantitas stok di tabel products
-                    DB::table('products')
-                        ->where('id', $detail->product_id)
-                        ->update([
-                            'current_stock' => $newStock,
-                            'updated_at' => now()
-                        ]);
-                }
+                // Kurangi stok menggunakan decrement (aman dari race condition)
+                DB::table('products')
+                    ->where('id', $detail->product_id)
+                    ->decrement('current_stock', $detail->qty, ['updated_at' => now()]);
             }
 
-            // Jika semua langkah di atas sukses tanpa interupsi, kunci perubahan ke database
             DB::commit();
             return response()->json(['status' => 'success', 'message' => 'Pembayaran lunas & stok berhasil dikurangi!']);
-            
+
         } catch (\Exception $e) {
-            // Jika ada satu saja baris yang gagal, batalkan semua agar data tidak korup
             DB::rollBack();
             return response()->json(['status' => 'error', 'message' => 'Gagal memperbarui data transaksi & stok: ' . $e->getMessage()], 500);
         }
