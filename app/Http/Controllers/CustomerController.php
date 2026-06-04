@@ -151,13 +151,20 @@ class CustomerController extends Controller
 
         // Hitung ulang akumulasi subtotal harga barang pasca mutasi data
         $retailPrice = $product->prices->where('price_level', 1)->first()->price ?? 0;
-        $itemSubtotal = $retailPrice * $newQty;
+        $priceToUse = $retailPrice;
+        if (Auth::check() && strtolower(Auth::user()->role) === 'b2b') {
+            $priceToUse = max(0, $retailPrice - 5000);
+        }
+        $itemSubtotal = $priceToUse * $newQty;
 
         // Hitung total seluruh belanjaan di dalam keranjang user sekarang
         $allCartItems = Cart::where('user_id', Auth::id())->get();
         $totalCartPrice = 0;
         foreach ($allCartItems as $item) {
             $priceRow = $item->product->prices->where('price_level', 1)->first()->price ?? 0;
+            if (Auth::check() && strtolower(Auth::user()->role) === 'b2b') {
+                $priceRow = max(0, $priceRow - 5000);
+            }
             $totalCartPrice += ($priceRow * $item->qty);
         }
 
@@ -178,6 +185,9 @@ class CustomerController extends Controller
         $totalCartPrice = 0;
         foreach ($allCartItems as $item) {
             $priceRow = $item->product->prices->where('price_level', 1)->first()->price ?? 0;
+            if (Auth::check() && strtolower(Auth::user()->role) === 'b2b') {
+                $priceRow = max(0, $priceRow - 5000);
+            }
             $totalCartPrice += ($priceRow * $item->qty);
         }
 
@@ -372,11 +382,15 @@ public function transactions(Request $request)
 
         $checkoutItems = [];
         $subtotal = 0;
+        $isB2b = Auth::check() && Auth::user()->role === 'B2B';
 
         if ($productId) {
             // JALUR 1: Beli Langsung
             $product = Product::with(['prices', 'images'])->findOrFail($productId);
             $price = $product->prices->where('price_level', 1)->first()->price ?? 0;
+            if ($isB2b) {
+                $price = max(0, $price - 5000);
+            }
             
             $checkoutItems[] = (object)[
                 'id' => $product->id,
@@ -397,6 +411,9 @@ public function transactions(Request $request)
             
             foreach ($cartItems as $item) {
                 $price = $item->product->prices->where('price_level', 1)->first()->price ?? 0;
+                if ($isB2b) {
+                    $price = max(0, $price - 5000);
+                }
                 $checkoutItems[] = (object)[
                     'id' => $item->product->id,
                     'name' => $item->product->name,
@@ -449,6 +466,9 @@ public function transactions(Request $request)
             
             $retailPriceObj = $product->prices->where('price_level', 1)->first();
             $price = $retailPriceObj ? $retailPriceObj->price : 0;
+            if (Auth::check() && strtolower(Auth::user()->role) === 'b2b') {
+                $price = max(0, $price - 5000);
+            }
             if ($price <= 0) return response()->json(['status' => 'error', 'message' => 'Harga produk belum diatur.'], 400);
             
             $itemDetails[] = [
@@ -477,6 +497,9 @@ public function transactions(Request $request)
 
                 $retailPriceObj = $item->product->prices->where('price_level', 1)->first();
                 $price = $retailPriceObj ? $retailPriceObj->price : 0;
+                if (Auth::check() && strtolower(Auth::user()->role) === 'b2b') {
+                    $price = max(0, $price - 5000);
+                }
 
                 if ($price > 0) {
                     $itemDetails[] = [

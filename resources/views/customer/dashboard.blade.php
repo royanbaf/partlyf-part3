@@ -238,11 +238,16 @@
                         <div id="products-grid-container" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                             @forelse($products as $prod)
                             @php 
-                                $price = $prod->prices->where('price_level', 1)->first(); 
+                                $retailPrice = $prod->prices->where('price_level', 1)->first();
+                                $displayPrice = $retailPrice->price ?? 0;
+                                // Diskon khusus B2B: potongan harga Rp 5.000
+                                if (Auth::check() && strtolower(Auth::user()->role) === 'b2b') {
+                                    $displayPrice = max(0, $displayPrice - 5000);
+                                }
                                 $isOutofStock = $prod->current_stock <= 0;
                             @endphp
                             
-                            <div class="luxury-card flex flex-col overflow-hidden relative {{ $isOutofStock ? 'opacity-70' : '' }}" data-price="{{ $price->price ?? 0 }}">
+                            <div class="luxury-card flex flex-col overflow-hidden relative {{ $isOutofStock ? 'opacity-70' : '' }}" data-price="{{ $displayPrice }}">
                                 @if($isOutofStock)
                                 <div class="absolute top-2.5 left-2.5 bg-slate-900 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 z-20">Stok Habis</div>
                                 @elseif($prod->cashback_percent > 0)
@@ -261,7 +266,10 @@
 
                                 <div class="p-4 flex flex-col flex-grow bg-white">
                                     <p class="font-extrabold text-slate-900 text-sm sm:text-base leading-none mb-1">
-                                        Rp {{ number_format($price->price ?? 0, 0, ',', '.') }}
+                                        @if(Auth::check() && Auth::user()->role === 'B2B')
+                                            <span class="text-[10px] text-emerald-500 font-bold">DISKON B2B Rp 5.000</span><br>
+                                        @endif
+                                        Rp {{ number_format($displayPrice, 0, ',', '.') }}
                                     </p>
                                     
                                     <a href="{{ route('product.detail', $prod->id) }}" class="text-xs font-semibold text-slate-700 line-clamp-2 leading-snug hover:text-[#c5a880] transition-colors mb-3 h-9">

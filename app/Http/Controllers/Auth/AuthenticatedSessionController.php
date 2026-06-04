@@ -34,9 +34,11 @@ class AuthenticatedSessionController extends Controller
         $user = Auth::user();
 
         // 4. Lemparkan user langsung ke halaman utama masing-masing sesuai Role
-        if ($user->role === 'admin') {
+        $userRole = strtolower($user->role);
+        
+        if ($userRole === 'admin') {
             return redirect()->intended(route('admin.dashboard'));
-        } elseif ($user->role === 'b2c') {
+        } elseif ($userRole === 'b2c' || $userRole === 'b2b') {
             return redirect()->intended(route('customer.dashboard'));
         }
 

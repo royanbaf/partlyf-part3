@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Manajemen Pelanggan | Partlyfe Admin</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -52,8 +53,8 @@
                             <div>
                                 <h3 class="text-base font-black text-white tracking-tight">{{ $c->name }}</h3>
                                 <p class="text-xs text-slate-400 font-mono mt-0.5">{{ $c->email }}</p>
-                                <span class="inline-flex items-center gap-1 mt-3 bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider">
-                                    <i class="fa-solid fa-user-tag text-[8px]"></i> Retail B2C
+                                <span class="inline-flex items-center gap-1 mt-3 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider customer-badge" data-user-id="{{ $c->id }}">
+                                    <i class="fa-solid fa-user-tag text-[8px]"></i> {{ strtolower($c->role) === 'b2b' ? 'Mitra B2B' : 'Retail B2C' }}
                                 </span>
                             </div>
                         </div>
@@ -66,8 +67,8 @@
                                 <i class="fa-solid fa-file-invoice opacity-50"></i> Riwayat Nota
                             </a>
                             
-                            <button class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-indigo-600/10">
-                                <i class="fa-solid fa-angles-up"></i> Jadi B2B
+                            <button type="button" class="btn-toggle-b2b flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-indigo-600/10" data-id="{{ $c->id }}">
+                                <i class="fa-solid fa-angles-up"></i> {{ $c->role === 'B2B' ? 'TURUNKAN KE B2C' : 'JADI B2B' }}
                             </button>
                         </div>
                     </div>
@@ -81,5 +82,51 @@
         </main>
     </div>
 
+    <script>
+        document.addEventListener('click', async function(e) {
+            if (e.target.closest('.btn-toggle-b2b')) {
+                const btn = e.target.closest('.btn-toggle-b2b');
+                const userId = btn.getAttribute('data-id');
+                
+                try {
+                    const response = await fetch('{{ route("admin.customers.toggle-b2b", ":id") }}'.replace(':id', userId), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ user_id: userId })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const card = btn.closest('.glass-card');
+                        const badge = card.querySelector('.customer-badge');
+                        
+                        btn.innerHTML = '<i class="fa-solid fa-angles-up"></i> ' + data.button_text;
+                        
+                        badge.className = 'inline-flex items-center gap-1 mt-3 text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider customer-badge ' + data.badge_class;
+                        badge.innerHTML = '<i class="fa-solid fa-user-tag text-[8px]"></i> ' + data.badge_text;
+                        
+                        showToast(data.message, 'success');
+                    } else {
+                        showToast(data.message || 'Gagal mengubah tingkatan pelanggan', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error: ' + error.message, 'error');
+                }
+            }
+        });
+
+        function showToast(message, type = 'success') {
+            let toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-xs font-bold z-50 ${type === 'success' ? 'bg-emerald-500/90 text-white' : 'bg-rose-500/90 text-white'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
 </body>
 </html>

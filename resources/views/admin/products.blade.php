@@ -49,6 +49,14 @@
                     <h3 class="text-lg font-black text-white uppercase tracking-wider">Daftar Suku Cadang</h3>
                     <p class="text-xs text-slate-500">Total {{ count($products ?? []) }} SKU terdaftar aktif di database Partlyfe.</p>
                 </div>
+                
+                {{-- Search Bar --}}
+                <form method="GET" class="relative">
+                    <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Cari produk, merek, atau SKU..."
+                        class="w-64 bg-slate-900/60 border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                </form>
+                
                 <button onclick="toggleModal('addProductModal')" 
                     class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider px-6 py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition flex items-center gap-2">
                     <i class="fa-solid fa-plus"></i> Tambah Produk

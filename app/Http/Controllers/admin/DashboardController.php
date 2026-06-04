@@ -64,8 +64,40 @@ class DashboardController extends Controller
     // 🚀 BONUS FIX: Tambahkan fungsi customers() ini jika halaman admin/customers memanggil fungsi ini di web.php
     public function customers()
     {
-        $customers = DB::table('users')->where('role', 'b2c')->latest()->get();
+        $customers = DB::table('users')->whereIn('role', ['b2c', 'B2C', 'b2b', 'B2B'])->latest()->get();
         return view('admin.customers', compact('customers'));
+    }
+
+    public function toggleB2bRole(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $user = DB::table('users')->where('id', $request->user_id)->first();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pelanggan tidak ditemukan.'
+            ], 404);
+        }
+
+        $currentRole = strtolower($user->role);
+        $newRole = $currentRole === 'b2b' ? 'B2B' : 'B2C';
+        
+        DB::table('users')->where('id', $request->user_id)->update([
+            'role' => $newRole
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $newRole === 'B2B' ? 'Tingkatan pelanggan dinaikkan menjadi B2B' : 'Tingkatan pelanggan dikembalikan ke B2C',
+            'new_role' => $newRole,
+            'button_text' => $newRole === 'B2B' ? 'TURUNKAN KE B2C' : 'JADI B2B',
+            'badge_text' => $newRole === 'B2B' ? 'Mitra B2B' : 'Retail B2C',
+            'badge_class' => $newRole === 'B2B' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+        ]);
     }
 
     // 🚀 FIX MUTLAK SAKTI: Mengembalikan UI dan Menghubungkan Data Transaksi Asli

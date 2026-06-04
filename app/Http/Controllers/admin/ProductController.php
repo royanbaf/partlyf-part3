@@ -10,11 +10,23 @@ use Illuminate\Support\Facades\Storage;
 class ProductController extends Controller
 {
     // 1. READ: Tampilkan semua produk dan ambil data gambar pertamanya
-    public function index()
+    public function index(Request $request)
     {
-        $products = DB::table('products')->latest('id')->get();
+        $search = $request->query('search');
+        
+        $productsQuery = DB::table('products');
+        
+        if ($search) {
+            $productsQuery->where(function($query) use ($search) {
+                $query->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('brand', 'LIKE', "%{$search}%")
+                    ->orWhere('item_code', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        $products = $productsQuery->latest('id')->get();
         $categories = DB::table('categories')->get();
-        return view('admin.products', compact('products', 'categories'));
+        return view('admin.products', compact('products', 'categories', 'search'));
     }
 
     // =======================================================================

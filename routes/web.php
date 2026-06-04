@@ -48,7 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         if (Auth::user()->role === 'admin') {
             return redirect('/admin/dashboard');
-        } elseif (Auth::user()->role === 'b2c') {
+        } elseif (strtolower(Auth::user()->role) === 'b2c' || strtolower(Auth::user()->role) === 'b2b') {
             return redirect('/customer/dashboard');
         }
         return redirect('/'); 
@@ -75,7 +75,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/customers', [DashboardController::class, 'customers'])->name('admin.customers.index');
     Route::get('/customers/{id}', [DashboardController::class, 'showCustomer'])->name('admin.customers.show');
-    Route::post('/customers/{id}/upgrade', [DashboardController::class, 'upgradeToB2b'])->name('admin.customers.upgrade');
+    Route::post('/customers/{id}/toggle-b2b', [DashboardController::class, 'toggleB2bRole'])->name('admin.customers.toggle-b2b');
     
     // 📣 4. Kirim Broadcast Promo (Hanya Satu Pasang Rute Resmi)
     Route::get('/broadcast', [BroadcastController::class, 'index'])->name('admin.broadcast.index');
@@ -87,9 +87,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
 
 // =======================================================================
-// ZONA PEMBELI ECERAN / B2C (FITUR PRIVAT: KERANJANG, TRANSAKSI, DLL)
+// ZONA PEMBELI ECERAN / B2C / B2B (FITUR PRIVAT: KERANJANG, TRANSAKSI, DLL)
 // =======================================================================
-Route::middleware(['auth', 'role:b2c'])->group(function () {
+Route::middleware(['auth', 'role:b2c|b2b'])->group(function () {
     
     // Tampilan Halaman
     Route::get('/customer/cart', [CustomerController::class, 'cart'])->name('customer.cart');

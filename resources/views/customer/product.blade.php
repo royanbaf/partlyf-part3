@@ -78,6 +78,12 @@
     {{-- KUNCI UTAMA: Inisialisasi Harga Retail ditaruh paling atas agar aman --}}
     @php 
         $retailPrice = $product->prices->where('price_level', 1)->first(); 
+        $displayPrice = $retailPrice->price ?? 0;
+        // Diskon khusus B2B: potongan harga Rp 5.000
+        $isB2b = Auth::check() && strtolower(Auth::user()->role) === 'b2b';
+        if ($isB2b) {
+            $displayPrice = max(0, $displayPrice - 5000);
+        }
     @endphp
 
     <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
@@ -179,7 +185,10 @@
                         <div class="mb-8">
                             <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Harga Retail</p>
                             <h2 class="text-4xl font-black text-gradient-animated leading-none">
-                                Rp {{ number_format($retailPrice->price ?? 0, 0, ',', '.') }}
+                                @if($isB2b)
+                                    <span class="text-[10px] text-emerald-500 font-bold">DISKON B2B Rp 5.000</span><br>
+                                @endif
+                                Rp {{ number_format($displayPrice, 0, ',', '.') }}
                             </h2>
                         </div>
 
@@ -310,9 +319,13 @@
 
                     <div class="flex gap-4 overflow-x-auto pb-6 no-scrollbar snap-x">
                         @foreach($recommendations as $rec)
-                        @php
+@php
                             $recPrice = $rec->prices->where('price_level', 1)->first();
                             $recIsOutofStock = $rec->current_stock <= 0;
+                            $recDisplayPrice = $recPrice->price ?? 0;
+                            if (Auth::check() && Auth::user()->role === 'B2B') {
+                                $recDisplayPrice = max(0, $recDisplayPrice - 5000);
+                            }
                         @endphp
 
                         <div class="snap-start flex-shrink-0 w-[200px] rec-card-light rounded-2xl flex flex-col relative overflow-hidden bg-white {{ $recIsOutofStock ? 'opacity-50' : '' }}">
@@ -345,7 +358,7 @@
                                         </span>
                                     </div>
                                     <h3 class="text-xs font-bold text-slate-700 leading-snug line-clamp-2 mb-3 h-8">{{ $rec->name }}</h3>
-                                    <p class="font-black text-sm text-slate-900 mt-auto">Rp {{ number_format($recPrice->price ?? 0, 0, ',', '.') }}</p>
+                                    <p class="font-black text-sm text-slate-900 mt-auto">Rp {{ number_format($recDisplayPrice, 0, ',', '.') }}</p>
                                 </div>
                             </a>
 
@@ -373,13 +386,16 @@
     </div>
 
     <script>
-        const pricePerItem = {{ $retailPrice->price ?? 0 }};
+        const retailPrice = {{ $retailPrice->price ?? 0 }};
+        const isB2b = {{ $isB2b ? 'true' : 'false' }};
+        const discountB2b = 5000;
+        const effectivePrice = isB2b ? Math.max(0, retailPrice - discountB2b) : retailPrice;
         const qtyInput    = document.getElementById('qtyInput');
         const qtyDisplay  = document.getElementById('qtyDisplay');
         const subtotalText = document.getElementById('subtotalText');
 
         function updateSubtotal() {
-            const total = parseInt(qtyInput.value) * pricePerItem;
+            const total = parseInt(qtyInput.value) * effectivePrice;
             subtotalText.innerText = 'Rp ' + total.toLocaleString('id-ID');
         }
         function increaseQty(max) {
