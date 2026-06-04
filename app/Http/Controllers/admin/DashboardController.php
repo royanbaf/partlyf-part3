@@ -84,7 +84,7 @@ class DashboardController extends Controller
         }
 
         $currentRole = strtolower($user->role);
-        $newRole = $currentRole === 'b2b' ? 'B2B' : 'B2C';
+        $newRole = $currentRole === 'b2b' ? 'B2C' : 'B2B';
         
         DB::table('users')->where('id', $request->user_id)->update([
             'role' => $newRole
