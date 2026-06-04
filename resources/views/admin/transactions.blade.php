@@ -6,6 +6,12 @@
     <title>Transaksi | Partlyfe Admin</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .status-dropdown option {
+            background-color: #0f172a;
+            color: #ffffff;
+        }
+    </style>
 </head>
 <body class="bg-[#020617] text-slate-200 flex h-screen overflow-hidden">
     @include('layouts.admin-sidebar')
@@ -58,7 +64,7 @@
                                     $currentStatus = strtolower(trim($t->status ?? 'pending'));
                                 @endphp
 
-                                <select onchange="updateStatus(this)" data-id="{{ $t->invoice_number ?? $t->transaction_real_id }}" class="status-dropdown bg-slate-800/60 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg px-3 py-2 border border-slate-600 cursor-pointer hover:border-amber-500 transition-colors">
+                                <select onchange="updateStatus(this)" data-id="{{ $t->invoice_number ?? $t->transaction_real_id }}" class="status-dropdown appearance-none bg-slate-900/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition cursor-pointer pr-10">
                                     <option value="Menunggu Bayar" {{ in_array($currentStatus, ['pending', 'unpaid']) ? 'selected' : '' }}>Menunggu Bayar</option>
                                     <option value="Sedang Diproses" {{ $currentStatus == 'processing' ? 'selected' : '' }}>Sedang Diproses</option>
                                     <option value="Selesai" {{ in_array($currentStatus, ['shipped', 'delivered']) ? 'selected' : '' }}>Selesai</option>
